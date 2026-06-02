@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>NEAR — Мой профиль</title>
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+  <script src="https://unpkg.com/lucide@1.17.0"></script> <script>if(typeof lucide==="undefined"){window.lucide={createIcons:function(){}}}</script>
+  
+  <link rel="stylesheet" href="/style.css">
+  
+  <style>
+    .profile-hero {
+      padding: 60px 0;
+    }
+
+    .profile-header {
+      display: flex;
+      gap: 32px;
+      align-items: center;
+      margin-bottom: 48px;
+    }
+
+    @media (max-width: 600px) {
+      .profile-header {
+        flex-direction: column;
+        text-align: center;
+      }
+    }
+
+    .profile-avatar {
+      width: 140px;
+      height: 140px;
+      border-radius: 40px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      background-size: cover;
+      background-position: center;
+      box-shadow: var(--shadow);
+    }
+
+    .profile-stats {
+      display: flex;
+      gap: 24px;
+      margin-top: 16px;
+    }
+
+    .stat-item {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .stat-value {
+      font-size: 18px;
+      font-weight: 800;
+    }
+
+    .stat-label {
+      font-size: 12px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      font-weight: 700;
+    }
+
+    .tabs-nav {
+      display: flex;
+      gap: 32px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 32px;
+    }
+
+    .tab-btn {
+      padding: 16px 0;
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      font-weight: 700;
+      cursor: pointer;
+      position: relative;
+      transition: color 0.2s;
+    }
+
+    .tab-btn.active {
+      color: var(--text);
+    }
+
+    .tab-btn.active {
+      color: var(--accent);
+    }
+
+    .tab-btn.active::after {
+      content: '';
+      position: absolute;
+      bottom: -1px;
+      left: 0;
+      width: 100%;
+      height: 2px;
+      background: var(--accent);
+    }
+
+    .feed-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 20px;
+    }
+
+    .social-links {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 16px;
+    }
+
+    .social-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 14px;
+      border-radius: 10px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--text);
+      font-size: 12px;
+      font-weight: 700;
+      text-decoration: none;
+      transition: all 0.2s;
+    }
+    .social-btn:hover { border-color: var(--accent); background: var(--accent-light); }
+
+    .social-btn svg { width: 16px; height: 16px; flex-shrink: 0; }
+
+    .review-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 20px;
+      margin-bottom: 16px;
+    }
+    .review-top {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 10px;
+    }
+    .review-stars {
+      display: flex;
+      gap: 2px;
+    }
+    .review-stars i {
+      width: 14px;
+      height: 14px;
+      color: #f59e0b;
+    }
+    .review-item-title {
+      font-weight: 700;
+      font-size: 14px;
+    }
+    .review-text {
+      font-size: 14px;
+      color: var(--text-muted);
+      line-height: 1.5;
+      margin-top: 8px;
+    }
+    .review-date {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-left: auto;
+    }
+    .review-empty {
+      text-align: center;
+      padding: 40px;
+      color: var(--text-muted);
+    }
+
+    @media (max-width: 600px) {
+      .profile-hero {
+        padding: 24px 0;
+      }
+      .profile-avatar {
+        width: 80px;
+        height: 80px;
+        border-radius: 22px;
+      }
+      .tabs-nav {
+        gap: 16px;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        padding-bottom: 4px;
+      }
+      .tab-btn {
+        white-space: nowrap;
+        padding: 12px 0;
+        font-size: 13px;
+      }
+      .feed-grid {
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 10px;
+      }
+    }
+    @media (max-width: 430px) {
+      .profile-avatar { width: 64px; height: 64px; border-radius: 18px; }
+      .profile-header { gap: 12px; }
+      #nick { font-size: 22px !important; }
+      .profile-stats { gap: 12px; }
+      .stat-value { font-size: 14px; }
+      .stat-label { font-size: 10px; }
+      .feed-grid { gap: 6px; }
+    }
+    @media (max-width: 320px) {
+      .profile-stats { flex-wrap: wrap; gap: 8px; }
+      .stat-value { font-size: 12px; }
+      #nick { font-size: 18px !important; }
+      .profile-avatar { width: 52px; height: 52px; border-radius: 14px; }
+    }
+  </style>
+</head>
+<body>
+<script>if(localStorage.getItem('near_theme')==='dark')document.body.classList.add('dark-theme')</script>
+
+<header>
+  <div class="logo" onclick="location.href='/'">NEAR<span>.</span></div>
+  <div class="header-actions">
+    <button class="btn btn-outline" onclick="location.href='/'">На главную</button>
+  </div>
+</header>
+
+<main class="profile-hero">
+  <div class="container fade-in">
+    <div class="profile-header">
+      <div id="avatar" class="profile-avatar"></div>
+      <div style="flex: 1;">
+        <div style="display: flex; align-items: center; gap: 16px; flex-wrap: wrap;">
+          <h1 id="nick" style="font-size: 32px;">@username</h1>
+          <button class="btn btn-outline" onclick="location.href='/settings'" style="padding: 8px 16px; font-size: 13px;"><i data-lucide="settings" style="width: 16px;"></i> Настройки</button>
+        </div>
+        <p id="bio" class="text-muted" style="margin: 12px 0 20px; max-width: 500px; white-space:pre-wrap; word-break:break-word; overflow-wrap:break-word;">Нет описания профиля</p>
+        
+        <div class="profile-stats">
+          <div class="stat-item">
+            <div id="countItems" class="stat-value">0</div>
+            <div class="stat-label">ОБЪЯВЛЕНИЙ</div>
+          </div>
+          <div class="stat-item">
+            <div id="countSales" class="stat-value">0</div>
+            <div class="stat-label">ПРОДАЖ</div>
+          </div>
+          <div class="stat-item">
+            <div id="countRating" class="stat-value">5.0</div>
+            <div class="stat-label">РЕЙТИНГ</div>
+          </div>
+        </div>
+
+        <div class="social-links" id="socialBox">
+          <!-- Links by JS -->
+        </div>
+      </div>
+    </div>
+
+    <div class="tabs-nav">
+      <button class="tab-btn active" onclick="switchTab('items', this)">Мои вещи</button>
+      <button class="tab-btn" onclick="switchTab('purchases', this)">Покупки</button>
+      <button class="tab-btn" onclick="switchTab('sales', this)">Продажи</button>
+      <button class="tab-btn" onclick="switchTab('reviews', this)">Отзывы</button>
+    </div>
+
+    <div id="profileFeed" class="feed-grid">
+      <!-- Content here -->
+    </div>
+  </div>
+</main>
+
+<script>
+  function toast(message) {
+    const container = document.getElementById('toastContainer');
+    if (!container) return console.log("Toast:", message);
+    const el = document.createElement('div');
+    el.className = 'toast';
+    el.innerHTML = message;
+    container.appendChild(el);
+    setTimeout(() => { el.style.opacity = '0'; setTimeout(() => el.remove(), 300); }, 3000);
+  }
+  window.toast = toast;
+  lucide.createIcons();
+  const me = localStorage.getItem("near_user");
+  if (!me) location.href = "/";
+
+  async function loadProfile() {
+    document.getElementById('nick').textContent = `@${me}`;
+    try {
+      const r = await fetch(`/api/user/${encodeURIComponent(me)}`);
+      const u = await r.json();
+      
+      if (u.avatar) document.getElementById('avatar').style.backgroundImage = `url('/uploads/${u.avatar}')`;
+      if (u.bio) {
+        document.getElementById('bio').textContent = u.bio;
+        document.getElementById('bio').style.whiteSpace = 'pre-wrap';
+      }
+      
+      const socialBox = document.getElementById('socialBox');
+      if (u.insta) socialBox.innerHTML += `<a href="https://instagram.com/${u.insta}" target="_blank" class="social-btn"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0z"/><path d="M12 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg> Instagram</a>`;
+      if (u.vk) socialBox.innerHTML += `<a href="https://vk.com/${u.vk}" target="_blank" class="social-btn"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M15.684 0H8.316C2.755 0 0 2.755 0 8.316v7.368C0 21.245 2.755 24 8.316 24h7.368C21.245 24 24 21.245 24 15.684V8.316C24 2.755 21.245 0 15.684 0zm3.599 16.49h-1.626c-.586 0-.766-.441-1.813-1.49-.917-.884-1.324-1.015-1.543-1.015-.312 0-.404.12-.404.684v1.132c0 .446-.144.69-1.297.69-1.916 0-4.054-1.182-5.555-3.385C5.085 10.496 4.444 8.46 4.444 7.46c0-.306.121-.576.668-.576h1.64c.5 0 .69.23.879.763.944 2.866 2.519 5.382 3.17 5.382.242 0 .355-.121.355-.774v-2.973c-.082-1.36-.79-1.474-.79-1.96 0-.247.192-.46.467-.46h2.558c.388 0 .534.192.534.608v3.292c0 .388.167.534.26.534.213 0 .387-.146.774-.534 1.245-1.375 2.162-3.5 2.162-3.5.112-.252.33-.508.808-.508h1.64c.557 0 .68.294.557.694-.29 1.022-2.755 4.448-2.755 4.448-.213.353-.29.486 0 .85.213.267.93.907 1.405 1.444.67.76 1.2 1.415 1.338 1.86.145.47-.048.73-.558.73z"/></svg> VK</a>`;
+      if (u.tg) socialBox.innerHTML += `<a href="https://t.me/${u.tg}" target="_blank" class="social-btn"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/></svg> Telegram</a>`;
+      lucide.createIcons();
+
+      const revR = await fetch(`/api/user/${encodeURIComponent(me)}/reviews`);
+      const revData = await revR.json();
+      document.getElementById('countRating').textContent = revData.avg_rating || '0';
+
+      loadTab('items');
+    } catch (e) { console.error(e); }
+  }
+
+  function switchTab(key, btn) {
+    document.querySelectorAll('.tab-btn').forEach(x => x.classList.remove('active'));
+    btn.classList.add('active');
+    loadTab(key);
+  }
+
+  async function loadTab(key) {
+    const box = document.getElementById('profileFeed');
+    box.className = key === 'reviews' ? '' : 'feed-grid';
+    box.innerHTML = '<p class="text-muted">Загрузка...</p>';
+    
+    if (key === 'reviews') {
+      return loadReviews(box);
+    }
+
+    try {
+      let items = [];
+      if (key === 'items') {
+        const r = await fetch("/api/items");
+        const all = await r.json();
+        items = all.filter(x => x.seller === me);
+        document.getElementById('countItems').textContent = items.length;
+      } else {
+        const r = await fetch(`/api/my/${key}?nick=${encodeURIComponent(me)}`).catch(() => ({ json: () => [] }));
+        items = await r.json().catch(() => []);
+      }
+
+      box.innerHTML = '';
+      if (items.length === 0) {
+        box.innerHTML = '<p class="text-muted">Здесь пока ничего нет</p>';
+        return;
+      }
+
+      items.forEach(item => {
+        const card = document.createElement('div');
+        card.className = 'card product-card fade-in';
+        const imgUrl = item.images && item.images[0] ? `/uploads/${item.images[0]}` : '/placeholder.jpg';
+        
+        card.innerHTML = `
+          <a href="/${item.seller}/${item.id}">
+            <div class="product-img" style="background-image: url('${imgUrl}')"></div>
+            <div class="product-info">
+              <div class="product-price">${item.price.toLocaleString()} ₽</div>
+              <div class="product-title">${item.title}</div>
+              <div class="product-meta">
+                <div class="product-seller">
+                  <span>@${item.seller}</span>
+                </div>
+                <span class="text-muted">${item.size || 'No size'}</span>
+              </div>
+            </div>
+          </a>
+        `;
+        box.appendChild(card);
+      });
+    } catch (e) {
+      box.innerHTML = '<p class="text-muted">Ошибка загрузки</p>';
+    }
+  }
+
+  async function loadReviews(box) {
+    try {
+      const r = await fetch(`/api/user/${encodeURIComponent(me)}/reviews`);
+      const data = await r.json();
+      if (!r.ok) throw new Error(data.error);
+
+      box.innerHTML = '';
+
+      if (!data.reviews.length) {
+        box.innerHTML = '<div class="review-empty">У вас пока нет отзывов</div>';
+        return;
+      }
+
+      data.reviews.forEach(rev => {
+        const card = document.createElement('div');
+        card.className = 'review-card fade-in';
+        const date = rev.created_at ? new Date(rev.created_at * 1000).toLocaleDateString('ru-RU') : '';
+        const starsHtml = Array(5).fill(0).map((_, i) =>
+          `<i data-lucide="star" style="width:14px;height:14px;${i < rev.rating ? '' : 'opacity:0.25'}"></i>`
+        ).join('');
+        card.innerHTML = `
+          <div class="review-top">
+            <span class="review-item-title">${rev.item_title}</span>
+            <span class="review-date">${date}</span>
+          </div>
+          <div class="review-stars">${starsHtml}</div>
+          <div class="review-text">${rev.text || 'Без текста'}</div>
+        `;
+        box.appendChild(card);
+      });
+      lucide.createIcons();
+    } catch (e) {
+      box.innerHTML = '<div class="review-empty">Ошибка загрузки отзывов</div>';
+    }
+  }
+
+  loadProfile();
+</script>
+
+<div class="toast-container" id="toastContainer"></div>
+
+<link rel="stylesheet" href="/chat.css">
+<script src="/widget.js"></script>
+
+</body>
+</html>

@@ -1,0 +1,769 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NEAR — Премиальный маркетплейс одежды</title>
+  
+  <!-- Fonts & Icons -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+  <script src="https://unpkg.com/lucide@1.17.0"></script> <script>if(typeof lucide==="undefined"){window.lucide={createIcons:function(){}}}</script>
+  
+  <link rel="stylesheet" href="/style.css">
+  
+  <style>
+    .hero {
+      padding: 80px 0;
+      text-align: center;
+      background: radial-gradient(circle at 50% 0%, var(--accent-light) 0%, transparent 70%);
+    }
+
+    .hero h1 {
+      font-size: 64px;
+      margin-bottom: 16px;
+      font-weight: 900;
+    }
+
+    .hero h1 span {
+      background: linear-gradient(135deg, var(--accent), var(--text));
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    body.dark-theme .hero h1 span {
+      background: linear-gradient(135deg, var(--accent), var(--text));
+      -webkit-background-clip: text;
+      background-clip: text;
+    }
+
+    .filters-grid {
+      display: grid;
+      grid-template-columns: 3fr 1fr 1fr;
+      gap: 12px;
+      margin: -40px 0 40px;
+    }
+    .filter-chips-group { grid-column: 1 / -1; }
+    .filter-reset { grid-column: 1 / -1; }
+    @media (max-width: 1024px) {
+      .filters-grid { grid-template-columns: 1fr 1fr; }
+    }
+
+    .feed-grid {
+      margin-bottom: 60px;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 100px 0;
+      color: var(--text-muted);
+    }
+
+    @media (max-width: 600px) {
+      .hero { padding: 30px 0 !important; }
+      .empty-state { padding: 60px 0; }
+      .empty-state h3 { font-size: 18px !important; }
+    }
+    @media (max-width: 430px) {
+      .hero h1 { font-size: 22px !important; }
+      .hero p { font-size: 13px !important; }
+    }
+    @media (max-width: 320px) {
+      .hero h1 { font-size: 18px !important; }
+    }
+  </style>
+</head>
+<body>
+<script>if(localStorage.getItem('near_theme')==='dark')document.body.classList.add('dark-theme')</script>
+
+<header>
+  <div class="logo" onclick="location.href='/'">NEAR<span>.</span></div>
+  <div class="header-actions">
+    <div id="nav-actions" style="display: flex; gap: 16px; align-items: center;">
+      <!-- Rendered by JS -->
+    </div>
+    <div class="nav-divider"></div>
+    <button class="theme-toggle" id="themeToggle" title="Сменить тему">
+      <i data-lucide="moon" id="themeIcon" style="width: 20px;"></i>
+    </button>
+  </div>
+</header>
+
+<main class="container">
+  <section class="hero">
+    <h1 class="fade-in">Лента товаров</h1>
+    <p class="text-muted fade-in" style="font-size: 18px;">используйте расширенные настройки поиска чтобы найти подходящий лот</p>
+  </section>
+
+  <div class="filters-grid fade-in">
+    <div class="filter-search" style="position: relative;">
+      <i data-lucide="search" style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); width: 16px; color: var(--text-muted);"></i>
+      <input id="q" placeholder="Поиск вещей..." style="padding-left: 40px; width: 100%;" oninput="debounceSearch()">
+    </div>
+    <div class="filter-brand">
+      <input id="brandF" placeholder="Бренд" style="width: 100%;">
+    </div>
+    <div class="filter-size">
+      <input id="sizeF" placeholder="Размер" style="width: 100%;">
+    </div>
+
+    <div class="filter-chips-group" style="display: flex; flex-direction: column; gap: 12px; margin-top: 12px;">
+      <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+        <span class="text-muted" style="font-size: 11px; font-weight: 800; text-transform: uppercase; flex-shrink: 0;">КАТЕГОРИИ:</span>
+        <div id="filterCategoryChips" style="display: flex; gap: 6px; flex-wrap: wrap;">
+          <button class="chip active" data-value="">Все</button>
+          <button class="chip" data-value="Футболки">Футболки</button>
+          <button class="chip" data-value="Худи">Худи</button>
+          <button class="chip" data-value="Куртки">Куртки</button>
+          <button class="chip" data-value="Брюки">Брюки</button>
+          <button class="chip" data-value="Джинсы">Джинсы</button>
+          <button class="chip" data-value="Обувь">Обувь</button>
+        </div>
+        <input type="hidden" id="cat" value="">
+      </div>
+      <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+        <span class="text-muted" style="font-size: 11px; font-weight: 800; text-transform: uppercase; flex-shrink: 0;">ПОДТИП:</span>
+        <div id="filterSubtypeChips" style="display: flex; gap: 6px; flex-wrap: wrap;">
+          <button class="chip active" data-value="">Все</button>
+          <button class="chip" data-value="Повседневное">Повседневное</button>
+          <button class="chip" data-value="Спорт">Спорт</button>
+          <button class="chip" data-value="Винтаж">Винтаж</button>
+          <button class="chip" data-value="Люкс">Люкс</button>
+          <button class="chip" data-value="Премиум">Премиум</button>
+          <button class="chip" data-value="Базовое">Базовое</button>
+          <button class="chip" data-value="Офис">Офис</button>
+          <button class="chip" data-value="Унисекс">Унисекс</button>
+          <button class="chip" data-value="Детское">Детское</button>
+          <button class="chip" data-value="Другое">Другое</button>
+        </div>
+        <input type="hidden" id="subtypeF" value="">
+      </div>
+      <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+        <span class="text-muted" style="font-size: 11px; font-weight: 800; text-transform: uppercase; flex-shrink: 0;">СОСТОЯНИЕ:</span>
+        <div id="filterConditionChips" style="display: flex; gap: 6px; flex-wrap: wrap;">
+          <button class="chip active" data-value="">Любое</button>
+          <button class="chip" data-value="Новое">Новое</button>
+          <button class="chip" data-value="Отличное">Отличное</button>
+          <button class="chip" data-value="Хорошее">Хорошее</button>
+          <button class="chip" data-value="Среднее">Среднее</button>
+        </div>
+        <input type="hidden" id="condF" value="">
+      </div>
+    </div>
+    <div class="filter-reset" style="display: flex; gap: 8px; margin-top: 12px;">
+      <button class="btn btn-outline" onclick="resetFilters()" style="width: 44px; height: 40px; padding: 0; flex-shrink: 0;"><i data-lucide="rotate-ccw" style="width: 16px;"></i></button>
+    </div>
+  </div>
+
+  <div id="feed" class="feed-grid">
+    <!-- Items load here -->
+  </div>
+
+  <div id="empty" class="empty-state" style="display: none; padding: 100px 0;">
+    <i data-lucide="box" style="width: 48px; height: 48px; margin-bottom: 20px; color: #a3a3a3;"></i>
+    <h3 style="font-size: 24px; margin-bottom: 8px;">Ничего не нашли?</h3>
+    <p style="font-size: 16px; color: #737373;">Попробуйте сбросить фильтры или изменить запрос</p>
+    <button class="btn btn-outline" onclick="resetFilters()" style="margin-top: 32px; padding: 12px 32px;">Сбросить всё</button>
+  </div>
+</main>
+
+<!-- WELCOME MODAL (rules acceptance) -->
+<div class="modal-overlay" id="welcomeModal">
+  <div class="modal-content" style="max-width: 640px;">
+    <div style="text-align:center;margin-bottom:24px;">
+      <div style="width:64px;height:64px;border-radius:20px;background:var(--accent-light);display:inline-flex;align-items:center;justify-content:center;margin-bottom:16px;">
+        <i data-lucide="sparkles" style="width:32px;height:32px;color:var(--accent);"></i>
+      </div>
+      <h2 style="font-size:24px;font-weight:900;">Добро пожаловать в NEAR</h2>
+    </div>
+    <div style="font-size:14px;line-height:1.7;color:var(--text-muted);max-height:280px;overflow-y:auto;padding-right:8px;margin-bottom:24px;text-align:justify;">
+      <p>Добро пожаловать в NEAR — маркетплейс, где собраны стильные и востребованные вещи от проверенных магазинов.</p>
+      <p>Проект объединил продавцов, которые годами работают с нишевыми и модными вещами, чтобы у вас был доступ к лучшему в одном месте.</p>
+      <p>Это место, где можно быстро найти интересующие вещи, сравнить предложения и выбрать то, что соответствует вашему стилю и запросу. Для продавцов это возможность представить свой ассортимент заинтересованной аудитории, для покупателей — доступ к качественным и актуальным товарам в одном пространстве.</p>
+      <p>Мы стремимся создать удобную, надежную и понятную площадку для выгодных покупок и успешных продаж.</p>
+      <p>Желаем вам выгодных приобретений, успешных продаж и только лучших предложений.</p>
+      <p style="font-weight:700;margin-top:16px;color:var(--text);">Ваш NEAR.</p>
+    </div>
+    <div style="display:flex;gap:12px;flex-direction:column;">
+      <button class="btn btn-primary" style="width:100%;height:48px;font-size:15px;" onclick="acceptRules()">Принимаю</button>
+      <button class="btn btn-ghost" style="width:100%;font-size:13px;" onclick="openSellerRules()">Правила для продавцов</button>
+    </div>
+  </div>
+</div>
+
+<!-- SELLER RULES MODAL -->
+<div class="modal-overlay" id="sellerRulesModal" onclick="if(event.target===this)this.style.display='none'">
+  <div class="modal-content" style="max-width:760px;max-height:90vh;display:flex;flex-direction:column;">
+    <div style="margin-bottom:16px;flex-shrink:0;">
+      <h2 style="font-size:20px;font-weight:900;">Правила для продавцов</h2>
+    </div>
+    <div style="font-size:12px;line-height:1.6;color:var(--text-muted);overflow-y:auto;padding-right:8px;flex:1;">
+      <h3 style="color:var(--text);font-weight:800;margin:16px 0 8px;font-size:14px;">1. Общие положения</h3>
+      <p>1.1. Настоящие Правила для продавцов NEAR (далее — Правила) регулируют порядок размещения товаров и использования функционала продавца на платформе NEAR.</p>
+      <p>1.2. Настоящие Правила являются неотъемлемой частью Пользовательского соглашения платформы NEAR. В случае противоречия между настоящими Правилами и Пользовательским соглашением применяются положения, которые в большей степени защищают интересы Платформы, если иное не вытекает из обязательных норм закона.</p>
+      <p>1.3. Размещая товар на Платформе, продавец подтверждает, что: ознакомился с настоящими Правилами; понимает их содержание; принимает их в полном объеме и обязуется соблюдать.</p>
+      <p>1.4. Платформа NEAR предоставляет продавцу исключительно техническую возможность размещения информации о товарах и взаимодействия с покупателями.</p>
+      <p>1.5. NEAR не является продавцом товара, покупателем, комиссионером, агентом, платежным посредником, хранителем, перевозчиком, организатором доставки или стороной сделки между продавцом и покупателем.</p>
+      <p>1.6. Все сделки в отношении товаров, размещенных на Платформе, заключаются непосредственно между продавцом и покупателем, без участия Администрации Платформы.</p>
+
+      <h3 style="color:var(--text);font-weight:800;margin:16px 0 8px;font-size:14px;">2. Требования к продавцу</h3>
+      <p>2.1. Продавец обязан предоставлять достоверные сведения о себе и, по требованию Платформы, подтверждать свою личность, контактные данные, полномочия и иные сведения документально.</p>
+      <p>2.2. Продавец обязуется использовать Платформу добросовестно, разумно и исключительно в законных целях.</p>
+      <p>2.3. Продавец гарантирует, что обладает полной правоспособностью и всеми необходимыми правами для: размещения товара на Платформе; заключения сделок с покупателями; использования фотографий, описаний, логотипов и иных материалов, загружаемых на Сайт.</p>
+      <p>2.4. Если продавец действует в интересах третьего лица, магазина, бренда или иного правообладателя, продавец обязан иметь все необходимые полномочия и по запросу Платформы подтвердить их документально.</p>
+
+      <h3 style="color:var(--text);font-weight:800;margin:16px 0 8px;font-size:14px;">3. Правила размещения товаров</h3>
+      <p>3.1. Продавец обязан размещать только достоверную, полную и не вводящую в заблуждение информацию о товаре.</p>
+      <p>3.2. В карточке товара продавец обязан указывать существенные характеристики товара, включая, когда это применимо: наименование товара; бренд; размер; состояние; наличие дефектов; комплектность; особенности материала; сведения об оригинальности; иные данные, которые могут повлиять на решение покупателя.</p>
+      <p>3.3. Фотографии товара должны: соответствовать фактическому товару; не вводить в заблуждение относительно состояния, цвета, комплектации и иных свойств; использоваться продавцом на законных основаниях.</p>
+      <p>3.4. Запрещается размещать: ложные или неполные описания; чужие фотографии без разрешения; изображения, не соответствующие товару; объявления с заведомо нереальной ценой, созданные для привлечения внимания; дублирующие объявления без согласования с Платформой.</p>
+      <p>3.5. Продавец самостоятельно определяет цену товара и иные условия сделки. Информация о товаре на Платформе, если иное прямо не указано продавцом, носит информационный характер и рассматривается как приглашение к заключению сделки, а не как публичная оферта.</p>
+
+      <h3 style="color:var(--text);font-weight:800;margin:16px 0 8px;font-size:14px;">4. Гарантии продавца</h3>
+      <p>4.1. Продавец гарантирует, что каждый размещенный им товар: принадлежит ему на законных основаниях либо он уполномочен распоряжаться таким товаром; не является украденным, утраченным, полученным преступным путем или иным незаконным способом; не является запрещенным к обороту; не нарушает права третьих лиц; соответствует размещенному описанию.</p>
+      <p>4.2. Продавец отдельно гарантирует, что товар не является: контрафактным; поддельным; незаконно маркированным; товаром, оборот которого ограничен или запрещен без соблюдения специальных требований.</p>
+      <p>4.3. Продавец гарантирует достоверность всех сведений, размещаемых им на Платформе, и принимает на себя все риски, связанные с их недостоверностью.</p>
+
+      <h3 style="color:var(--text);font-weight:800;margin:16px 0 8px;font-size:14px;">5. Оригинальность, бренды и права третьих лиц</h3>
+      <p>5.1. Если товар обозначен как оригинальный, продавец обязан иметь разумные и добросовестные основания для такого указания.</p>
+      <p>5.2. По требованию Платформы продавец обязан предоставить документы, фотографии, переписку, чеки, бирки, упаковку, серийные номера или иные сведения, подтверждающие происхождение товара и законность его размещения.</p>
+      <p>5.3. Если в отношении товара, фото, описания, обозначения бренда, логотипа или иного элемента поступит жалоба правообладателя либо иного лица, Платформа вправе без предварительного уведомления: скрыть товар; удалить карточку; ограничить доступ к аккаунту продавца; запросить документы; передать сведения в пределах, допускаемых законом, компетентным органам или заявителю при наличии правовых оснований.</p>
+      <p>5.4. Продавец самостоятельно и в полном объеме несет ответственность за любые нарушения авторских прав, прав на товарные знаки, коммерческие обозначения, фирменные наименования, изображения и иные объекты интеллектуальной собственности.</p>
+
+      <h3 style="color:var(--text);font-weight:800;margin:16px 0 8px;font-size:14px;">6. Отношения с покупателем</h3>
+      <p>6.1. Продавец самостоятельно ведет переговоры с покупателем, определяет условия сделки и несет полную ответственность за их исполнение.</p>
+      <p>6.2. Продавец обязан: отвечать покупателю добросовестно и без введения в заблуждение; сообщать достоверные сведения о товаре; не скрывать известные ему дефекты; соблюдать согласованные с покупателем условия передачи товара.</p>
+      <p>6.3. Все обязательства перед покупателем, включая обязательства по описанию товара, фактической передаче, срокам, возврату, обмену, компенсации, урегулированию претензий и иным условиям сделки, несет исключительно продавец.</p>
+      <p>6.4. Все споры, требования и претензии, возникающие из сделки между продавцом и покупателем, продавец обязан урегулировать самостоятельно и за свой счет.</p>
+
+      <h3 style="color:var(--text);font-weight:800;margin:16px 0 8px;font-size:14px;">7. Платежи и расчеты</h3>
+      <p>7.1. Платформа не принимает оплату за товары, размещенные продавцами, и не участвует в расчетах между продавцом и покупателем.</p>
+      <p>7.2. Продавец подтверждает, что все платежные отношения возникают непосредственно между ним и покупателем.</p>
+      <p>7.3. Платформа не отвечает за: перевод или неперевод денежных средств; ошибки в реквизитах; чарджбеки; действия банков, платежных сервисов и иных посредников; мошенничество при оплате; неполучение продавцом денежных средств; непередачу товара после оплаты.</p>
+      <p>7.4. Продавец не вправе создавать у покупателей впечатление, что Платформа: проверила безопасность сделки; гарантирует получение оплаты; контролирует перевод денег; подтверждает исполнение обязательств покупателем.</p>
+
+      <h3 style="color:var(--text);font-weight:800;margin:16px 0 8px;font-size:14px;">8. Запрещенные действия продавца</h3>
+      <p>8.1. Продавцу запрещается: размещать поддельные, контрафактные, запрещенные, украденные или иным образом незаконные товары; публиковать недостоверные сведения о товаре; вводить покупателей в заблуждение относительно происхождения, состояния, бренда, подлинности или цены товара; использовать чужие фото, описания, логотипы и иные материалы без правовых оснований; создавать фиктивные объявления; размещать один и тот же товар многократно без необходимости; использовать автоматизированные средства размещения, парсинга, рассылки или обхода ограничений Платформы без разрешения; совершать мошеннические действия, манипулировать рейтингами, отзывами или активностью на Сайте.</p>
+      <p>8.2. Продавцу запрещается использовать формулировки, которые могут создать у покупателя ложное впечатление, что: сделка проводится под гарантией NEAR; товар проверен или сертифицирован Платформой; NEAR подтверждает оригинальность товара; Платформа выступает посредником расчетов или гарантом возврата средств.</p>
+
+      <h3 style="color:var(--text);font-weight:800;margin:16px 0 8px;font-size:14px;">9. Право Платформы на проверку и модерацию</h3>
+      <p>9.1. Платформа вправе, но не обязана, проверять товары, профили продавцов, описание товаров, фотографии, переписку в пределах доступного функционала, а также документы и материалы, представленные продавцом.</p>
+      <p>9.2. Платформа вправе по своему усмотрению и без объяснения причин: отклонить публикацию товара; скрыть, снять с публикации или удалить товар; ограничить функционал продавца; запросить дополнительные документы; временно приостановить или полностью заблокировать аккаунт продавца; отказать в дальнейшем использовании Платформы.</p>
+      <p>9.3. Такие меры могут применяться, в частности, в случае: жалобы покупателя; жалобы правообладателя; подозрения на мошенничество; признаков подделки или контрафакта; недостоверного описания; нарушения настоящих Правил, Пользовательского соглашения или закона.</p>
+      <p>9.4. Платформа не обязана заранее уведомлять продавца о применении указанных мер, если иное не вытекает из обязательных требований законодательства.</p>
+
+      <h3 style="color:var(--text);font-weight:800;margin:16px 0 8px;font-size:14px;">10. Ответственность продавца</h3>
+      <p>10.1. Продавец несет полную ответственность за: содержание и достоверность размещенной информации; происхождение товара; его подлинность; законность предложения товара к продаже; соблюдение прав третьих лиц; исполнение всех обязательств перед покупателем.</p>
+      <p>10.2. Если вследствие действий или бездействия продавца к Платформе будут предъявлены претензии, требования, иски, штрафы, компенсации, расходы, убытки или иные санкции со стороны покупателей, правообладателей, государственных органов или иных лиц, продавец обязуется: самостоятельно и за свой счет урегулировать такие требования; по требованию Платформы вступить в процесс урегулирования спора; возместить Платформе все причиненные убытки, расходы, штрафы, судебные издержки, выплаты и иные потери.</p>
+      <p>10.3. Продавец соглашается, что Платформа вправе использовать предоставленные продавцом сведения и документы для защиты своих прав и законных интересов в случае спора.</p>
+      <p>10.4. Договорно ограничивать ответственность в целом можно не во всех пределах: заранее исключить или ограничить ответственность за собственное умышленное нарушение нельзя, и такие условия ничтожны. Поэтому документ фиксирует ответственность продавца за его действия, а не пытается «стереть» обязательные нормы закона.</p>
+
+      <h3 style="color:var(--text);font-weight:800;margin:16px 0 8px;font-size:14px;">11. Коммуникация и документы</h3>
+      <p>11.1. Продавец обязан по запросу Платформы в разумный срок предоставить: документы, подтверждающие личность; документы или сведения о происхождении товара; подтверждение права использования фото и описаний; иные материалы, имеющие значение для рассмотрения жалобы или спора.</p>
+      <p>11.2. Непредоставление таких сведений в установленный Платформой срок может являться основанием для удаления товара, ограничения аккаунта или полной блокировки продавца.</p>
+
+      <h3 style="color:var(--text);font-weight:800;margin:16px 0 8px;font-size:14px;">12. Персональные данные и взаимодействие с покупателями</h3>
+      <p>12.1. Продавец обязуется использовать персональные данные покупателей, полученные через Платформу, только в объеме, необходимом для общения по конкретной сделке или предполагаемой сделке.</p>
+      <p>12.2. Продавцу запрещается: собирать избыточные персональные данные; использовать данные покупателей в иных целях без законного основания; передавать персональные данные третьим лицам без законного основания; использовать контактные данные покупателей для спама, навязчивых рассылок или иных несогласованных коммуникаций.</p>
+      <p>12.3. В части работы Платформы с персональными данными действует отдельная Политика обработки персональных данных, которая должна быть опубликована или иным образом доступна неограниченному кругу лиц.</p>
+
+      <h3 style="color:var(--text);font-weight:800;margin:16px 0 8px;font-size:14px;">13. Изменение правил</h3>
+      <p>13.1. Платформа вправе в любое время изменять настоящие Правила.</p>
+      <p>13.2. Новая редакция Правил вступает в силу с момента ее размещения на Сайте, если иной срок не указан в самой редакции.</p>
+      <p>13.3. Продолжение использования Платформы после размещения новой редакции означает согласие продавца с внесенными изменениями.</p>
+
+      <h3 style="color:var(--text);font-weight:800;margin:16px 0 8px;font-size:14px;">14. Применимое право</h3>
+      <p>14.1. К настоящим Правилам применяется право Российской Федерации.</p>
+      <p>14.2. Все вопросы, не урегулированные настоящими Правилами, регулируются Пользовательским соглашением и применимым законодательством Российской Федерации.</p>
+    </div>
+    <div style="display:flex;gap:12px;margin-top:16px;flex-shrink:0;">
+      <button class="btn btn-primary" style="flex:1;height:44px;font-size:14px;" onclick="document.getElementById('sellerRulesModal').style.display='none';document.getElementById('welcomeModal').style.display='flex';">Назад</button>
+    </div>
+  </div>
+</div>
+
+<!-- LOGIN MODAL -->
+<div class="modal-overlay" id="loginModal">
+  <div class="modal-content">
+    <h2 style="margin-bottom: 24px;">Вход в аккаунт</h2>
+    <div style="display: flex; flex-direction: column; gap: 16px;">
+      <div>
+        <label class="text-muted" style="font-size: 12px; font-weight: 700; margin-bottom: 6px; display: block;">НИКНЕЙМ</label>
+        <input type="text" id="nicknameInput" placeholder="Ваш ник" style="width: 100%;">
+      </div>
+      <div>
+        <label class="text-muted" style="font-size: 12px; font-weight: 700; margin-bottom: 6px; display: block;">ПАРОЛЬ</label>
+        <input type="password" id="passwordInput" placeholder="••••••••" style="width: 100%;">
+      </div>
+      <button class="btn btn-primary" style="width: 100%; height: 48px; margin-top: 8px;" onclick="handleLogin()">Войти или Создать</button>
+      <button class="btn btn-ghost" style="width: 100%;" onclick="closeModal('loginModal')">Отмена</button>
+    </div>
+  </div>
+</div>
+
+<!-- SELL MODAL -->
+<div class="modal-overlay" id="sellModal">
+  <div class="modal-content" style="max-width: 600px;">
+    <h2 style="margin-bottom: 8px;">Выставить вещь</h2>
+    <p class="text-muted" style="margin-bottom: 24px;">Заполните детали, чтобы покупатели нашли ваш товар</p>
+    
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;" class="sell-grid">
+      <div style="grid-column: span 2;">
+        <label class="text-muted" style="font-size: 12px; font-weight: 700; margin-bottom: 6px; display: block;">НАЗВАНИЕ</label>
+        <input type="text" id="t" style="width: 100%;">
+      </div>
+      <div style="grid-column: span 2;">
+        <label class="text-muted" style="font-size: 12px; font-weight: 700; margin-bottom: 6px; display: block;">ЦЕНА (₽)</label>
+        <input type="number" id="p" style="width: 100%;">
+      </div>
+      <div style="grid-column: span 2;">
+        <label class="text-muted" style="font-size: 12px; font-weight: 700; margin-bottom: 6px; display: block;">КОЛИЧЕСТВО</label>
+        <input type="number" id="qty" value="1" min="1" style="width: 100%;">
+      </div>
+      <div style="grid-column: span 2;">
+        <label class="text-muted" style="font-size: 11px; font-weight: 800; margin-bottom: 8px; display: block; text-transform: uppercase; letter-spacing: 0.05em;">Категория</label>
+        <div id="categoryChips" style="display: flex; gap: 8px; overflow-x: auto; white-space: nowrap; padding: 4px 0 12px; width: 100%;">
+          <button class="chip" data-value="Футболки" style="flex-shrink: 0;">Футболки</button>
+          <button class="chip" data-value="Худи" style="flex-shrink: 0;">Худи</button>
+          <button class="chip" data-value="Куртки" style="flex-shrink: 0;">Куртки</button>
+          <button class="chip" data-value="Брюки" style="flex-shrink: 0;">Брюки</button>
+          <button class="chip" data-value="Джинсы" style="flex-shrink: 0;">Джинсы</button>
+          <button class="chip" data-value="Обувь" style="flex-shrink: 0;">Обувь</button>
+          <button class="chip" data-value="Другое" style="flex-shrink: 0;">Другое</button>
+        </div>
+        <input type="hidden" id="catAdd" value="">
+      </div>
+      <div style="grid-column: span 2;">
+        <label class="text-muted" style="font-size: 11px; font-weight: 800; margin-bottom: 8px; display: block; text-transform: uppercase; letter-spacing: 0.05em;">Подтип</label>
+        <div id="subtypeChips" style="display: flex; gap: 8px; overflow-x: auto; white-space: nowrap; padding: 4px 0 12px; width: 100%;">
+          <button class="chip" data-value="Повседневное" style="flex-shrink: 0;">Повседневное</button>
+          <button class="chip" data-value="Спорт" style="flex-shrink: 0;">Спорт</button>
+          <button class="chip" data-value="Винтаж" style="flex-shrink: 0;">Винтаж</button>
+          <button class="chip" data-value="Люкс" style="flex-shrink: 0;">Люкс</button>
+          <button class="chip" data-value="Премиум" style="flex-shrink: 0;">Премиум</button>
+          <button class="chip" data-value="Базовое" style="flex-shrink: 0;">Базовое</button>
+          <button class="chip" data-value="Офис" style="flex-shrink: 0;">Офис</button>
+          <button class="chip" data-value="Унисекс" style="flex-shrink: 0;">Унисекс</button>
+          <button class="chip" data-value="Детское" style="flex-shrink: 0;">Детское</button>
+          <button class="chip" data-value="Другое" style="flex-shrink: 0;">Другое</button>
+        </div>
+        <input type="hidden" id="subtypeAdd" value="">
+      </div>
+      <div style="grid-column: span 2;">
+        <label class="text-muted" style="font-size: 11px; font-weight: 800; margin-bottom: 8px; display: block; text-transform: uppercase;">Состояние</label>
+        <div id="conditionDots" style="display: flex; gap: 8px; overflow-x: auto; padding-bottom: 8px;">
+          <button class="chip" data-value="Новое" style="flex-shrink: 0;">Новое</button>
+          <button class="chip" data-value="Отличное" style="flex-shrink: 0;">Отличное</button>
+          <button class="chip" data-value="Хорошее" style="flex-shrink: 0;">Хорошее</button>
+          <button class="chip" data-value="Среднее" style="flex-shrink: 0;">Среднее</button>
+        </div>
+        <input type="hidden" id="condAdd" value="Хорошее">
+      </div>
+      <div style="grid-column: span 2;">
+        <label class="text-muted" style="font-size: 12px; font-weight: 700; margin-bottom: 6px; display: block;">РАЗМЕР</label>
+        <input type="text" id="s" style="width: 100%;">
+      </div>
+      <div style="grid-column: span 2;">
+        <label class="text-muted" style="font-size: 12px; font-weight: 700; margin-bottom: 6px; display: block;">БРЕНД</label>
+        <input type="text" id="b" style="width: 100%;">
+      </div>
+      <div style="grid-column: span 2;">
+        <label class="text-muted" style="font-size: 12px; font-weight: 700; margin-bottom: 6px; display: block;">ОПИСАНИЕ</label>
+        <textarea id="d" style="width: 100%; height: 100px;"></textarea>
+      </div>
+      
+      <div style="grid-column: span 2;">
+        <label class="text-muted" style="font-size: 12px; font-weight: 700; margin-bottom: 6px; display: block;">ФОТОГРАФИИ (ДО 7 ШТ)</label>
+        <div style="border: 2px dashed var(--border); border-radius: 12px; padding: 20px; text-align: center; cursor: pointer;" onclick="document.getElementById('imgs').click()">
+          <i data-lucide="upload-cloud" style="width: 32px; height: 32px; color: var(--primary); margin-bottom: 8px;"></i>
+          <p style="font-size: 13px;">Нажмите или перетащите фото</p>
+          <input id="imgs" type="file" accept="image/*" multiple style="display:none">
+        </div>
+        <div id="previews" style="display: flex; gap: 10px; flex-wrap: wrap; margin-top: 16px;"></div>
+      </div>
+    </div>
+
+    <div style="display: flex; gap: 12px; margin-top: 32px;" class="sell-actions">
+      <button class="btn btn-primary" style="flex: 1; height: 48px;" onclick="submitItem()">Опубликовать</button>
+      <button class="btn btn-outline" style="flex: 1;" onclick="closeModal('sellModal')">Отмена</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast-container" id="toastContainer"></div>
+
+<script>
+  let me = localStorage.getItem("near_user") || null;
+  let selectedFiles = [];
+
+  // Initialize Lucide icons
+  lucide.createIcons();
+
+  // Toast Functionality
+  window.toast = function(message, type = 'info') {
+    const container = document.getElementById('toastContainer');
+    const el = document.createElement('div');
+    el.className = 'toast';
+    el.innerHTML = `<div>${message}</div>`;
+    container.appendChild(el);
+    setTimeout(() => {
+      el.style.opacity = '0';
+      el.style.transform = 'translateX(20px)';
+      setTimeout(() => el.remove(), 300);
+    }, 3000);
+  }
+  const toast = window.toast;
+
+  function openModal(id) {
+    const modal = document.getElementById(id);
+    modal.style.display = 'flex';
+  }
+
+  function closeModal(id) {
+    document.getElementById(id).style.display = 'none';
+  }
+
+  // Auth Rendering
+  function renderAuth() {
+    const nav = document.getElementById('nav-actions');
+    me = localStorage.getItem("near_user");
+    
+    if (!me) {
+      nav.innerHTML = `<button class="btn btn-primary" onclick="openModal('loginModal')">Войти</button>`;
+    } else {
+      nav.innerHTML = `
+        <button class="btn btn-premium" onclick="openModal('sellModal')" style="padding: 10px 24px; font-size: 14px; border-radius: 12px;">+ Продать</button>
+        <div class="user-badge" onclick="location.href='/profile'">
+          <div class="user-badge-icon"><i data-lucide="user" style="width: 18px;"></i></div>
+          <span class="user-badge-name">@${me}</span>
+        </div>
+      `;
+      lucide.createIcons();
+    }
+  }
+
+  async function handleLogin() {
+    const nickname = document.getElementById('nicknameInput').value.trim();
+    const password = document.getElementById('passwordInput').value;
+
+    if (!/^[a-zA-Z0-9_]{2,20}$/.test(nickname)) {
+      return toast("Неверный формат ника (2-20 симв, латиница/_/цифры)", "error");
+    }
+
+    try {
+      const r = await fetch("/api/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ nickname, password })
+      });
+      const data = await r.json();
+      if (!r.ok) throw new Error(data.error);
+
+      localStorage.setItem("near_user", data.nickname);
+      closeModal('loginModal');
+      renderAuth();
+      toast("Успешный вход!");
+      renderItems();
+    } catch (e) {
+      toast(e.message, "error");
+    }
+  }
+
+  // Filters
+  function getSearchParams() {
+    const params = new URLSearchParams(window.location.search);
+    return {
+      q: params.get('q') || '',
+      cat: params.get('cat') || '',
+      subtype: params.get('subtype') || '',
+      brand: params.get('brand') || '',
+      size: params.get('size') || '',
+      cond: params.get('cond') || ''
+    };
+  }
+
+  let searchDebounce;
+  function debounceSearch() {
+    clearTimeout(searchDebounce);
+    searchDebounce = setTimeout(() => applyFilters(), 300);
+  }
+
+  function applyFilters() {
+    const params = new URLSearchParams();
+    const q = document.getElementById('q').value;
+    const cat = document.getElementById('cat').value;
+    const subtype = document.getElementById('subtypeF').value;
+    const brand = document.getElementById('brandF').value;
+    const size = document.getElementById('sizeF').value;
+    const cond = document.getElementById('condF').value;
+
+    if (q) params.set('q', q);
+    if (cat) params.set('cat', cat);
+    if (subtype) params.set('subtype', subtype);
+    if (brand) params.set('brand', brand);
+    if (size) params.set('size', size);
+    if (cond) params.set('cond', cond);
+
+    window.history.replaceState({}, '', `${window.location.pathname}?${params}`);
+    renderItems();
+  }
+
+  // Home Filter Chips
+  function setupFilterChips(containerId, inputId) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+    const chips = container.querySelectorAll('.chip');
+    chips.forEach(chip => {
+      chip.onclick = () => {
+        chips.forEach(c => c.classList.remove('active'));
+        chip.classList.add('active');
+        document.getElementById(inputId).value = chip.getAttribute('data-value');
+        applyFilters();
+      };
+    });
+  }
+  setupFilterChips('filterCategoryChips', 'cat');
+  setupFilterChips('filterSubtypeChips', 'subtypeF');
+  setupFilterChips('filterConditionChips', 'condF');
+
+  function resetFilters() {
+    document.getElementById('q').value = '';
+    document.getElementById('cat').value = '';
+    document.getElementById('subtypeF').value = '';
+    document.getElementById('brandF').value = '';
+    document.getElementById('sizeF').value = '';
+    document.getElementById('condF').value = '';
+    document.querySelectorAll('.filters-grid .chip').forEach(c => {
+        c.classList.remove('active');
+        if(c.getAttribute('data-value') === '') c.classList.add('active');
+    });
+    window.history.replaceState({}, '', window.location.pathname);
+    renderItems();
+  }
+
+  // Horizontal Scroll with Wheel
+  function enableHorizontalScroll(id) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.addEventListener('wheel', (e) => {
+      if (e.deltaY !== 0) {
+        e.preventDefault();
+        el.scrollLeft += e.deltaY;
+      }
+    });
+  }
+  ['categoryChips', 'conditionDots', 'subtypeChips', 'filterCategoryChips', 'filterSubtypeChips', 'filterConditionChips'].forEach(enableHorizontalScroll);
+
+  // Items Rendering
+  async function renderItems() {
+    const feed = document.getElementById('feed');
+    const empty = document.getElementById('empty');
+    const { q, cat, brand, size, cond } = getSearchParams();
+
+    try {
+      const r = await fetch("/api/items");
+      const all = await r.json();
+      
+      const filtered = all.filter(item => {
+        if (q && !item.title.toLowerCase().includes(q.toLowerCase()) && !item.brand.toLowerCase().includes(q.toLowerCase())) return false;
+        if (cat && item.category !== cat) return false;
+        if (brand && !item.brand.toLowerCase().includes(brand.toLowerCase())) return false;
+        if (size && !item.size.toLowerCase().includes(size.toLowerCase())) return false;
+        if (cond && item.condition !== cond) return false;
+        return true;
+      });
+
+      feed.innerHTML = '';
+      if (filtered.length === 0) {
+        empty.style.display = 'block';
+      } else {
+        empty.style.display = 'none';
+        filtered.forEach(item => {
+          const card = document.createElement('div');
+          card.className = 'card product-card fade-in';
+          const imgUrl = item.images && item.images[0] ? `/uploads/${item.images[0]}` : '/placeholder.jpg';
+          
+          card.innerHTML = `
+            <a href="/${item.seller}/${item.id}">
+              <div class="product-img" style="background-image: url('${imgUrl}')">
+              </div>
+              <div class="product-info">
+                <div class="product-price">${item.price.toLocaleString()} ₽</div>
+                <div class="product-title">${item.title}</div>
+                <div class="product-meta">
+                  <div class="product-seller">
+                    <div class="seller-avatar-mini" style="${item.seller_avatar ? `background-image: url('/uploads/${item.seller_avatar}')` : ''}"></div>
+                    <span>@${item.seller}</span>
+                  </div>
+                  <span class="text-muted">${item.size || 'No size'}</span>
+                </div>
+              </div>
+            </a>
+          `;
+          feed.appendChild(card);
+        });
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  }
+
+  // Image Upload Handling
+  document.getElementById('imgs').addEventListener('change', (e) => {
+    const files = Array.from(e.target.files);
+    files.forEach(f => {
+      if (selectedFiles.length < 7) selectedFiles.push(f);
+    });
+    renderPreviews();
+  });
+
+  function renderPreviews() {
+    const box = document.getElementById('previews');
+    box.innerHTML = '';
+    selectedFiles.forEach((f, i) => {
+      const url = URL.createObjectURL(f);
+      const div = document.createElement('div');
+      div.style = `width: 60px; height: 60px; border-radius: 8px; background-image: url('${url}'); background-size: cover; position: relative;`;
+      div.innerHTML = `<div onclick="removeImage(${i})" style="position: absolute; top: -5px; right: -5px; background: var(--error); color: white; border-radius: 50%; width: 18px; height: 18px; display: flex; align-items: center; justify-content: center; font-size: 10px; cursor: pointer;">✕</div>`;
+      box.appendChild(div);
+    });
+  }
+
+  function removeImage(i) {
+    selectedFiles.splice(i, 1);
+    renderPreviews();
+  }
+
+  // Category & Condition Selection for Add Modal
+  function setupChips(containerId, inputId) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+    const chips = container.querySelectorAll('.chip');
+    chips.forEach(chip => {
+      chip.onclick = () => {
+        chips.forEach(c => c.classList.remove('active'));
+        chip.classList.add('active');
+        document.getElementById(inputId).value = chip.getAttribute('data-value') || chip.textContent;
+      };
+    });
+  }
+  setupChips('categoryChips', 'catAdd');
+  setupChips('conditionDots', 'condAdd');
+  setupChips('subtypeChips', 'subtypeAdd');
+
+  // Theme Toggle
+  const themeToggle = document.getElementById('themeToggle');
+  const themeIcon = document.getElementById('themeIcon');
+  function updateTheme() {
+    const isDark = localStorage.getItem('near_theme') === 'dark';
+    document.body.classList.toggle('dark-theme', isDark);
+    if (themeIcon) {
+        themeIcon.setAttribute('data-lucide', isDark ? 'sun' : 'moon');
+        lucide.createIcons();
+    }
+  }
+  if (themeToggle) {
+    themeToggle.onclick = () => {
+      const isDark = document.body.classList.contains('dark-theme');
+      localStorage.setItem('near_theme', isDark ? 'light' : 'dark');
+      updateTheme();
+    };
+  }
+  updateTheme();
+
+  async function submitItem() {
+    if (!me) return toast("Сначала войдите", "error");
+    
+    const title = document.getElementById('t').value;
+    const price = document.getElementById('p').value;
+    const category = document.getElementById('catAdd').value;
+    const condition = document.getElementById('condAdd').value;
+    const size = document.getElementById('s').value;
+    const brand = document.getElementById('b').value;
+    const subtype = document.getElementById('subtypeAdd').value;
+    const desc = document.getElementById('d').value;
+
+    if (!title || !price || selectedFiles.length === 0) {
+      return toast("Заполните название, цену и добавьте фото", "error");
+    }
+
+    const formData = new FormData();
+    formData.append('seller', me);
+    formData.append('title', title);
+    formData.append('price', price);
+    formData.append('quantity', document.getElementById('qty').value || 1);
+    formData.append('category', category);
+    formData.append('condition', condition);
+    formData.append('size', size);
+    formData.append('brand', brand);
+    formData.append('subtype', subtype);
+    formData.append('description', desc);
+    selectedFiles.forEach(f => formData.append('images', f));
+
+    try {
+      const r = await fetch("/api/item/add", { method: "POST", body: formData });
+      if (!r.ok) throw new Error("Ошибка при добавлении");
+      
+      closeModal('sellModal');
+      // Toast removed by user request
+      selectedFiles = [];
+      renderPreviews();
+      // Reset fields
+      ['t', 'p', 'qty', 's', 'b', 'subtypeAdd', 'd', 'catAdd', 'condAdd'].forEach(id => {
+          const el = document.getElementById(id);
+          if (el) el.value = '';
+      });
+      document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+    } catch (e) {
+      toast(e.message, "error");
+    }
+  }
+
+  // --- WELCOME MODAL / RULES ---
+  function acceptRules() {
+    localStorage.setItem('near_rules_accepted', 'true');
+    document.getElementById('welcomeModal').style.display = 'none';
+    lucide.createIcons();
+  }
+
+  function openSellerRules() {
+    document.getElementById('welcomeModal').style.display = 'none';
+    document.getElementById('sellerRulesModal').style.display = 'flex';
+    lucide.createIcons();
+  }
+
+  // Initial load
+  const p = getSearchParams();
+  document.getElementById('q').value = p.q;
+  document.getElementById('cat').value = p.cat;
+  document.getElementById('brandF').value = p.brand;
+  document.getElementById('sizeF').value = p.size;
+  document.getElementById('condF').value = p.cond;
+
+  renderAuth();
+  renderItems();
+
+  // Show welcome modal on first visit
+  if (!localStorage.getItem('near_rules_accepted')) {
+    setTimeout(() => {
+      document.getElementById('welcomeModal').style.display = 'flex';
+      lucide.createIcons();
+    }, 500);
+  }
+
+  // Open chat from URL param
+  const urlParams = new URLSearchParams(location.search);
+  const chatWith = urlParams.get('chat');
+  if (chatWith && window.openChat) {
+    setTimeout(() => window.openChat(chatWith), 500);
+  }
+</script>
+
+<!-- Scripts -->
+<link rel="stylesheet" href="/chat.css">
+<script src="/widget.js"></script>
+
+</body>
+</html>

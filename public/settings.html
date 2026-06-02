@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>NEAR — Настройки профиля</title>
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+  <script src="https://unpkg.com/lucide@1.17.0"></script> <script>if(typeof lucide==="undefined"){window.lucide={createIcons:function(){}}}</script>
+  
+  <link rel="stylesheet" href="/style.css">
+  
+  <style>
+    .settings-container {
+      max-width: 800px;
+      margin: 40px auto;
+    }
+
+    .settings-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 40px;
+    }
+
+    .form-group {
+      margin-bottom: 24px;
+    }
+
+    .form-label {
+      font-size: 12px;
+      font-weight: 800;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      margin-bottom: 8px;
+      display: block;
+    }
+
+    .avatar-upload {
+      display: flex;
+      align-items: center;
+      gap: 24px;
+      margin-bottom: 40px;
+    }
+
+    .avatar-preview {
+      width: 100px;
+      height: 100px;
+      border-radius: 30px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      background-size: cover;
+      background-position: center;
+    }
+
+    .input-with-icon {
+      position: relative;
+    }
+
+    .input-with-icon i {
+      position: absolute;
+      left: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 16px;
+      color: var(--text-muted);
+    }
+
+    .input-with-icon input {
+      padding-left: 40px;
+    }
+
+    @media (max-width: 600px) {
+      .settings-container {
+        margin: 12px auto;
+      }
+      .settings-card {
+        padding: 20px !important;
+        border-radius: 12px;
+      }
+      .avatar-upload {
+        flex-direction: column;
+        text-align: center;
+        gap: 16px;
+      }
+      .form-label {
+        font-size: 10px;
+      }
+      .btn[onclick="handleLogout()"] {
+        width: 100%;
+      }
+    }
+    @media (max-width: 430px) {
+      .settings-card { padding: 16px !important; }
+      .avatar-preview { width: 72px; height: 72px; border-radius: 22px; }
+    }
+    @media (max-width: 320px) {
+      .settings-card { padding: 12px !important; border-radius: 10px; }
+      .form-label { font-size: 9px; }
+      input, select, textarea { padding: 8px; font-size: 12px; }
+    }
+  </style>
+</head>
+<body>
+<script>if(localStorage.getItem('near_theme')==='dark')document.body.classList.add('dark-theme')</script>
+
+<header>
+  <div class="logo" onclick="location.href='/'">NEAR<span>.</span></div>
+  <div class="header-actions">
+    <button class="theme-toggle" id="themeToggle" title="Сменить тему">
+      <i data-lucide="moon" id="themeIcon" style="width: 20px;"></i>
+    </button>
+    <button class="btn btn-outline" onclick="location.href='/profile'">Назад в профиль</button>
+  </div>
+</header>
+
+<main class="container settings-container fade-in">
+  <div class="settings-card">
+    <h1 style="margin-bottom: 8px;">Настройки</h1>
+    <p class="text-muted" style="margin-bottom: 40px;">Управляйте своим профилем и личными данными</p>
+
+    <div class="avatar-upload">
+      <div id="avaPreview" class="avatar-preview"></div>
+      <div>
+        <button class="btn btn-primary" onclick="document.getElementById('avatarFile').click()">
+          <i data-lucide="upload" style="width: 16px;"></i> Загрузить фото
+        </button>
+        <input type="file" id="avatarFile" accept="image/*" style="display: none;" onchange="previewAva(this)">
+        <p class="text-muted" style="font-size: 11px; margin-top: 8px;">JPG, PNG или GIF. Макс 2MB.</p>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">ВАШ НИКНЕЙМ (ТОЛЬКО ЧТЕНИЕ)</label>
+      <input type="text" id="currentNick" disabled style="width: 100%; opacity: 0.6;">
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">НОВЫЙ ПАРОЛЬ (ОСТАВЬТЕ ПУСТЫМ, ЧТОБЫ НЕ МЕНЯТЬ)</label>
+      <div class="input-with-icon">
+        <i data-lucide="lock"></i>
+        <input type="password" id="password" placeholder="••••••••" style="width: 100%;">
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">О СЕБЕ</label>
+      <textarea id="bio" maxlength="500" placeholder="Расскажите о себе... (до 500 символов)" style="width: 100%; height: 120px;" oninput="document.getElementById('bioCounter').textContent=this.value.length"></textarea>
+      <div style="text-align:right;font-size:11px;color:var(--text-muted);margin-top:4px;"><span id="bioCounter">0</span>/500</div>
+    </div>
+
+    <h3 style="margin: 40px 0 20px;">Социальные сети</h3>
+    
+    <div class="form-group">
+      <label class="form-label">INSTAGRAM</label>
+      <div class="input-with-icon">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="position:absolute;left:14px;top:50%;transform:translateY(-50%);color:var(--text-muted);"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0z"/><path d="M12 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg>
+        <input type="text" id="insta" placeholder="username" style="width: 100%;">
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">VK</label>
+      <div class="input-with-icon">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="position:absolute;left:14px;top:50%;transform:translateY(-50%);color:var(--text-muted);"><path d="M15.684 0H8.316C2.755 0 0 2.755 0 8.316v7.368C0 21.245 2.755 24 8.316 24h7.368C21.245 24 24 21.245 24 15.684V8.316C24 2.755 21.245 0 15.684 0zm3.599 16.49h-1.626c-.586 0-.766-.441-1.813-1.49-.917-.884-1.324-1.015-1.543-1.015-.312 0-.404.12-.404.684v1.132c0 .446-.144.69-1.297.69-1.916 0-4.054-1.182-5.555-3.385C5.085 10.496 4.444 8.46 4.444 7.46c0-.306.121-.576.668-.576h1.64c.5 0 .69.23.879.763.944 2.866 2.519 5.382 3.17 5.382.242 0 .355-.121.355-.774v-2.973c-.082-1.36-.79-1.474-.79-1.96 0-.247.192-.46.467-.46h2.558c.388 0 .534.192.534.608v3.292c0 .388.167.534.26.534.213 0 .387-.146.774-.534 1.245-1.375 2.162-3.5 2.162-3.5.112-.252.33-.508.808-.508h1.64c.557 0 .68.294.557.694-.29 1.022-2.755 4.448-2.755 4.448-.213.353-.29.486 0 .85.213.267.93.907 1.405 1.444.67.76 1.2 1.415 1.338 1.86.145.47-.048.73-.558.73z"/></svg>
+        <input type="text" id="vk" placeholder="username" style="width: 100%;">
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">TELEGRAM</label>
+      <div class="input-with-icon">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="position:absolute;left:14px;top:50%;transform:translateY(-50%);color:var(--text-muted);"><path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/></svg>
+        <input type="text" id="tg" placeholder="username" style="width: 100%;">
+      </div>
+    </div>
+
+    <div style="display: flex; gap: 16px; margin-top: 48px; padding-top: 32px; border-top: 1px solid var(--border);">
+      <button class="btn btn-primary" style="flex: 1; height: 48px;" onclick="saveSettings()">Сохранить изменения</button>
+      <button class="btn btn-outline" style="color: var(--error); border-color: rgba(255, 82, 82, 0.2);" onclick="handleLogout()">Выйти из аккаунта</button>
+    </div>
+  </div>
+</main>
+
+<div class="toast-container" id="toastContainer"></div>
+
+  <script>
+    lucide.createIcons();
+    const me = localStorage.getItem("near_user");
+    if (!me) location.href = "/";
+
+    // Theme synchronization
+    function syncTheme() {
+        const isDark = localStorage.getItem('near_theme') === 'dark';
+        document.body.classList.toggle('dark-theme', isDark);
+    }
+
+    // Initial theme sync
+    syncTheme();
+
+    // Theme toggle
+    const themeToggle = document.getElementById('themeToggle');
+    const themeIcon = document.getElementById('themeIcon');
+    if (themeToggle) {
+      themeToggle.onclick = () => {
+        const isDark = document.body.classList.contains('dark-theme');
+        localStorage.setItem('near_theme', isDark ? 'light' : 'dark');
+        syncTheme();
+        if (themeIcon) {
+          themeIcon.setAttribute('data-lucide', isDark ? 'sun' : 'moon');
+          lucide.createIcons();
+        }
+      };
+    }
+
+    // Listen for theme changes from other tabs
+    window.addEventListener('storage', (e) => {
+        if (e.key === 'near_theme') syncTheme();
+    });
+
+  function toast(message) {
+    const container = document.getElementById('toastContainer');
+    const el = document.createElement('div');
+    el.className = 'toast';
+    el.innerHTML = message;
+    container.appendChild(el);
+    setTimeout(() => { el.style.opacity = '0'; setTimeout(() => el.remove(), 300); }, 3000);
+  }
+
+  async function loadSettings() {
+    document.getElementById('currentNick').value = me;
+    try {
+      const r = await fetch(`/api/user/${encodeURIComponent(me)}`);
+      const u = await r.json();
+      
+      if (u.avatar) document.getElementById('avaPreview').style.backgroundImage = `url('/uploads/${u.avatar}')`;
+      document.getElementById('bio').value = u.bio || '';
+      document.getElementById('bioCounter').textContent = (u.bio || '').length;
+      document.getElementById('insta').value = u.insta || '';
+      document.getElementById('vk').value = u.vk || '';
+      document.getElementById('tg').value = u.tg || '';
+    } catch (e) { console.error(e); }
+  }
+
+  function previewAva(input) {
+    if (input.files && input.files[0]) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        document.getElementById('avaPreview').style.backgroundImage = `url('${e.target.result}')`;
+      };
+      reader.readAsDataURL(input.files[0]);
+    }
+  }
+
+  async function saveSettings() {
+    const formData = new FormData();
+    formData.append('currentNick', me);
+    formData.append('bio', document.getElementById('bio').value);
+    formData.append('insta', document.getElementById('insta').value);
+    formData.append('vk', document.getElementById('vk').value);
+    formData.append('tg', document.getElementById('tg').value);
+    
+    const pw = document.getElementById('password').value;
+    if (pw) formData.append('password', pw);
+    
+    const file = document.getElementById('avatarFile').files[0];
+    if (file) formData.append('avatar', file);
+
+    try {
+      const r = await fetch("/api/user/update", { method: "POST", body: formData });
+      if (r.ok) {
+        toast("Настройки сохранены!");
+        setTimeout(() => location.href = "/profile", 1500);
+      } else {
+        const data = await r.json();
+        toast(data.error || "Ошибка сохранения");
+      }
+    } catch (e) {
+      toast("Ошибка сети");
+    }
+  }
+
+  function handleLogout() {
+    localStorage.removeItem("near_user");
+    location.href = "/";
+  }
+
+  loadSettings();
+</script>
+
+</body>
+</html>
