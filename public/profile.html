@@ -199,11 +199,35 @@
         grid-template-columns: repeat(2, 1fr) !important;
         gap: 10px;
       }
+      .social-btn {
+        padding: 7px 13px !important;
+        font-size: 12px !important;
+        gap: 5px !important;
+        border-radius: 8px !important;
+      }
+      .social-btn svg {
+        width: 15px !important;
+        height: 15px !important;
+      }
+      .profile-header > div[style*="flex: 1"] {
+        min-width: 0;
+        max-width: 100%;
+        overflow: hidden;
+      }
+      .profile-header > div[style*="flex: 1"] > div:first-child {
+        justify-content: center;
+      }
+      .social-links {
+        justify-content: center;
+      }
+      .profile-stats {
+        justify-content: center;
+      }
     }
     @media (max-width: 430px) {
       .profile-avatar { width: 64px; height: 64px; border-radius: 18px; }
       .profile-header { gap: 12px; }
-      #nick { font-size: 22px !important; }
+      #nick { font-size: 22px !important; overflow-wrap: break-word; word-break: break-word; max-width: 100%; }
       .profile-stats { gap: 12px; }
       .stat-value { font-size: 14px; }
       .stat-label { font-size: 10px; }

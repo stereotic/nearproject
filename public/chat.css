@@ -5,12 +5,12 @@
   right: 24px;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 18px;
   z-index: 500;
 }
 
 @media (max-width: 600px) {
-  .near-fab { bottom: 16px; right: 16px; gap: 8px; }
+  .near-fab { bottom: 16px; right: 16px; gap: 14px; }
   .near-fab-btn { width: 48px; height: 48px; border-radius: 14px; }
 }
 @media (max-width: 380px) {

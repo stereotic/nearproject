@@ -147,6 +147,18 @@ db.serialize(() => {
   `);
 
   db.run(`
+    CREATE TABLE IF NOT EXISTS social_requests (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      nick TEXT NOT NULL,
+      insta TEXT DEFAULT '',
+      vk TEXT DEFAULT '',
+      tg TEXT DEFAULT '',
+      status TEXT DEFAULT 'pending',
+      created_at INTEGER DEFAULT (strftime('%s','now'))
+    )
+  `);
+
+  db.run(`
     CREATE TABLE IF NOT EXISTS reports (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       type TEXT NOT NULL,
@@ -311,8 +323,9 @@ app.post("/api/user/update", upload.single("avatar"), (req, res) => {
 
   if (!currentNick) return res.status(400).json({ error: "no nick" });
 
-  const fields = ["bio=?", "insta=?", "vk=?", "tg=?"];
-  const params = [bio, insta, vk, tg];
+  // Сначала обновляем bio, avatar, password (без соцсетей)
+  const fields = ["bio=?"];
+  const params = [bio];
 
   if (password) {
     fields.push("password=?");
@@ -326,7 +339,26 @@ app.post("/api/user/update", upload.single("avatar"), (req, res) => {
   params.push(currentNick);
   db.run(`UPDATE users SET ${fields.join(", ")} WHERE nickname=?`, params, function (e) {
     if (e) return res.status(500).json({ error: "db error" });
-    res.json({ ok: true });
+
+    // Соцсети — проверяем, изменились ли
+    db.get(`SELECT insta, vk, tg FROM users WHERE nickname=?`, [currentNick], (e2, user) => {
+      const changed = insta !== (user.insta || '') || vk !== (user.vk || '') || tg !== (user.tg || '');
+
+      if (!changed) {
+        return res.json({ ok: true });
+      }
+
+      // Отправляем на модерацию
+      db.run(
+        `INSERT INTO social_requests(nick, insta, vk, tg) VALUES(?,?,?,?)`,
+        [currentNick, insta, vk, tg],
+        function (e3) {
+          if (e3) return res.status(500).json({ error: "db error" });
+          addNotif(currentNick, "Ваши социальные сети отправлены на проверку модератору");
+          res.json({ ok: true, social_pending: true });
+        }
+      );
+    });
   });
 });
 
@@ -1062,6 +1094,62 @@ app.get("/api/admin/user/:nick/items", requireAdmin, (req, res) => {
   db.all(`SELECT * FROM items WHERE seller=? ORDER BY created_at DESC`, [nick], (e, rows) => {
     if (e) return res.status(500).json({ error: "db error" });
     res.json((rows || []).map(mapItemRow));
+  });
+});
+
+// ===============================
+// ADMIN — SOCIAL MODERATION
+// ===============================
+app.get("/api/admin/social/pending", requireAdmin, (req, res) => {
+  db.all(
+    `SELECT * FROM social_requests WHERE status='pending' ORDER BY created_at DESC LIMIT 50`,
+    [],
+    (e, rows) => {
+      if (e) return res.status(500).json({ error: "db error" });
+      res.json(rows || []);
+    }
+  );
+});
+
+app.post("/api/admin/social/:id/approve", requireAdmin, (req, res) => {
+  const id = parseInt(req.params.id, 10);
+  if (!id) return res.status(400).json({ error: "bad id" });
+
+  db.get(`SELECT * FROM social_requests WHERE id=?`, [id], (e0, req2) => {
+    if (e0) return res.status(500).json({ error: "db error" });
+    if (!req2) return res.status(404).json({ error: "not found" });
+    if (req2.status !== 'pending') return res.status(400).json({ error: "already processed" });
+
+    db.run(
+      `UPDATE users SET insta=?, vk=?, tg=? WHERE nickname=?`,
+      [req2.insta, req2.vk, req2.tg, req2.nick],
+      function (e1) {
+        if (e1) return res.status(500).json({ error: "db error" });
+
+        db.run(`UPDATE social_requests SET status='approved' WHERE id=?`, [id], function (e2) {
+          if (e2) return res.status(500).json({ error: "db error" });
+          addNotif(req2.nick, "Ваши социальные сети одобрены! Они отображаются в вашем профиле.");
+          res.json({ ok: true });
+        });
+      }
+    );
+  });
+});
+
+app.post("/api/admin/social/:id/reject", requireAdmin, (req, res) => {
+  const id = parseInt(req.params.id, 10);
+  if (!id) return res.status(400).json({ error: "bad id" });
+
+  db.get(`SELECT * FROM social_requests WHERE id=?`, [id], (e0, req2) => {
+    if (e0) return res.status(500).json({ error: "db error" });
+    if (!req2) return res.status(404).json({ error: "not found" });
+    if (req2.status !== 'pending') return res.status(400).json({ error: "already processed" });
+
+    db.run(`UPDATE social_requests SET status='rejected' WHERE id=?`, [id], function (e1) {
+      if (e1) return res.status(500).json({ error: "db error" });
+      addNotif(req2.nick, "Ваши социальные сети не прошли проверку и были отклонены");
+      res.json({ ok: true });
+    });
   });
 });
 

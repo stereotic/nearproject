@@ -151,7 +151,8 @@
       <div style="text-align:right;font-size:11px;color:var(--text-muted);margin-top:4px;"><span id="bioCounter">0</span>/500</div>
     </div>
 
-    <h3 style="margin: 40px 0 20px;">Социальные сети</h3>
+    <h3 style="margin: 40px 0 4px;">Социальные сети</h3>
+    <p class="text-muted" style="font-size: 11px; margin-bottom: 20px;">Изменения соцсетей проходят проверку модератором и появятся в профиле после одобрения</p>
     
     <div class="form-group">
       <label class="form-label">INSTAGRAM</label>
@@ -270,11 +271,15 @@
 
     try {
       const r = await fetch("/api/user/update", { method: "POST", body: formData });
+      const data = await r.json();
       if (r.ok) {
-        toast("Настройки сохранены!");
+        if (data.social_pending) {
+          toast("Социальные сети отправлены на проверку модератору");
+        } else {
+          toast("Настройки сохранены!");
+        }
         setTimeout(() => location.href = "/profile", 1500);
       } else {
-        const data = await r.json();
         toast(data.error || "Ошибка сохранения");
       }
     } catch (e) {
