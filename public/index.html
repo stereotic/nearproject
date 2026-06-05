@@ -105,55 +105,62 @@
     <div class="filter-brand">
       <input id="brandF" placeholder="Бренд" style="width: 100%;">
     </div>
-    <div class="filter-size">
-      <input id="sizeF" placeholder="Размер" style="width: 100%;">
+    <div class="filter-size" style="display: flex; gap: 8px; align-items: center;">
+      <input id="sizeF" placeholder="Размер" style="flex: 1; min-width: 0;">
+      <button id="filterToggle" class="btn btn-outline" onclick="toggleFilters()" style="width: 40px; height: 40px; padding: 0; flex-shrink: 0;" title="Расширенные фильтры">
+        <i data-lucide="sliders-horizontal" style="width: 16px;"></i>
+      </button>
     </div>
 
-    <div class="filter-chips-group" style="display: flex; flex-direction: column; gap: 12px; margin-top: 12px;">
-      <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
-        <span class="text-muted" style="font-size: 11px; font-weight: 800; text-transform: uppercase; flex-shrink: 0;">КАТЕГОРИИ:</span>
-        <div id="filterCategoryChips" style="display: flex; gap: 6px; flex-wrap: wrap;">
-          <button class="chip active" data-value="">Все</button>
-          <button class="chip" data-value="Футболки">Футболки</button>
-          <button class="chip" data-value="Худи">Худи</button>
-          <button class="chip" data-value="Куртки">Куртки</button>
-          <button class="chip" data-value="Брюки">Брюки</button>
-          <button class="chip" data-value="Джинсы">Джинсы</button>
-          <button class="chip" data-value="Обувь">Обувь</button>
+    <div id="filterPanel" class="filter-panel">
+      <div class="filter-panel-inner">
+      <div class="filter-chips-group" style="display: flex; flex-direction: column; gap: 12px;">
+        <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+          <span class="text-muted" style="font-size: 11px; font-weight: 800; text-transform: uppercase; flex-shrink: 0;">КАТЕГОРИИ:</span>
+          <div id="filterCategoryChips" style="display: flex; gap: 6px; flex-wrap: wrap;">
+            <button class="chip active" data-value="">Все</button>
+            <button class="chip" data-value="Футболки">Футболки</button>
+            <button class="chip" data-value="Худи">Худи</button>
+            <button class="chip" data-value="Куртки">Куртки</button>
+            <button class="chip" data-value="Брюки">Брюки</button>
+            <button class="chip" data-value="Джинсы">Джинсы</button>
+            <button class="chip" data-value="Обувь">Обувь</button>
+          </div>
+          <input type="hidden" id="cat" value="">
         </div>
-        <input type="hidden" id="cat" value="">
-      </div>
-      <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
-        <span class="text-muted" style="font-size: 11px; font-weight: 800; text-transform: uppercase; flex-shrink: 0;">ПОДТИП:</span>
-        <div id="filterSubtypeChips" style="display: flex; gap: 6px; flex-wrap: wrap;">
-          <button class="chip active" data-value="">Все</button>
-          <button class="chip" data-value="Повседневное">Повседневное</button>
-          <button class="chip" data-value="Спорт">Спорт</button>
-          <button class="chip" data-value="Винтаж">Винтаж</button>
-          <button class="chip" data-value="Люкс">Люкс</button>
-          <button class="chip" data-value="Премиум">Премиум</button>
-          <button class="chip" data-value="Базовое">Базовое</button>
-          <button class="chip" data-value="Офис">Офис</button>
-          <button class="chip" data-value="Унисекс">Унисекс</button>
-          <button class="chip" data-value="Детское">Детское</button>
-          <button class="chip" data-value="Другое">Другое</button>
+        <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+          <span class="text-muted" style="font-size: 11px; font-weight: 800; text-transform: uppercase; flex-shrink: 0;">ПОДТИП:</span>
+          <div id="filterSubtypeChips" style="display: flex; gap: 6px; flex-wrap: wrap;">
+            <button class="chip active" data-value="">Все</button>
+            <button class="chip" data-value="Повседневное">Повседневное</button>
+            <button class="chip" data-value="Спорт">Спорт</button>
+            <button class="chip" data-value="Винтаж">Винтаж</button>
+            <button class="chip" data-value="Люкс">Люкс</button>
+            <button class="chip" data-value="Премиум">Премиум</button>
+            <button class="chip" data-value="Базовое">Базовое</button>
+            <button class="chip" data-value="Офис">Офис</button>
+            <button class="chip" data-value="Унисекс">Унисекс</button>
+            <button class="chip" data-value="Детское">Детское</button>
+            <button class="chip" data-value="Другое">Другое</button>
+          </div>
+          <input type="hidden" id="subtypeF" value="">
         </div>
-        <input type="hidden" id="subtypeF" value="">
-      </div>
-      <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
-        <span class="text-muted" style="font-size: 11px; font-weight: 800; text-transform: uppercase; flex-shrink: 0;">СОСТОЯНИЕ:</span>
-        <div id="filterConditionChips" style="display: flex; gap: 6px; flex-wrap: wrap;">
-          <button class="chip active" data-value="">Любое</button>
-          <button class="chip" data-value="Новое">Новое</button>
-          <button class="chip" data-value="Отличное">Отличное</button>
-          <button class="chip" data-value="Хорошее">Хорошее</button>
-          <button class="chip" data-value="Среднее">Среднее</button>
+        <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+          <span class="text-muted" style="font-size: 11px; font-weight: 800; text-transform: uppercase; flex-shrink: 0;">СОСТОЯНИЕ:</span>
+          <div id="filterConditionChips" style="display: flex; gap: 6px; flex-wrap: wrap;">
+            <button class="chip active" data-value="">Любое</button>
+            <button class="chip" data-value="Новое">Новое</button>
+            <button class="chip" data-value="Отличное">Отличное</button>
+            <button class="chip" data-value="Хорошее">Хорошее</button>
+            <button class="chip" data-value="Среднее">Среднее</button>
+          </div>
+          <input type="hidden" id="condF" value="">
         </div>
-        <input type="hidden" id="condF" value="">
       </div>
-    </div>
-    <div class="filter-reset" style="display: flex; gap: 8px; margin-top: 12px;">
-      <button class="btn btn-outline" onclick="resetFilters()" style="width: 44px; height: 40px; padding: 0; flex-shrink: 0;"><i data-lucide="rotate-ccw" style="width: 16px;"></i></button>
+      <div class="filter-reset" style="display: flex; gap: 8px; margin-top: 12px;">
+        <button class="btn btn-outline" onclick="resetFilters()" style="width: 44px; height: 40px; padding: 0; flex-shrink: 0;"><i data-lucide="rotate-ccw" style="width: 16px;"></i></button>
+      </div>
+      </div>
     </div>
   </div>
 
@@ -543,6 +550,15 @@
     renderItems();
   }
 
+  function toggleFilters() {
+    const panel = document.getElementById('filterPanel');
+    const btn = document.getElementById('filterToggle');
+    const isOpen = panel.classList.contains('open');
+    panel.classList.toggle('open');
+    btn.classList.toggle('active');
+    lucide.createIcons();
+  }
+
   // Horizontal Scroll with Wheel
   function enableHorizontalScroll(id) {
     const el = document.getElementById(id);
@@ -738,9 +754,15 @@
   const p = getSearchParams();
   document.getElementById('q').value = p.q;
   document.getElementById('cat').value = p.cat;
+  document.getElementById('subtypeF').value = p.subtype;
   document.getElementById('brandF').value = p.brand;
   document.getElementById('sizeF').value = p.size;
   document.getElementById('condF').value = p.cond;
+
+  if (p.cat || p.subtype || p.cond) {
+    document.getElementById('filterPanel').classList.add('open');
+    document.getElementById('filterToggle').classList.add('active');
+  }
 
   renderAuth();
   renderItems();
