@@ -94,19 +94,24 @@
 <main class="container">
   <section class="hero">
     <h1 class="fade-in">Лента товаров</h1>
-    <p class="text-muted fade-in" style="font-size: 18px;">используйте расширенные настройки поиска чтобы найти подходящий лот</p>
   </section>
 
   <div class="filters-grid fade-in">
+    <div style="grid-column: 1 / -1; display: flex; justify-content: center; margin-bottom: 6px;">
+      <span style="display: inline-flex; align-items: center; gap: 6px; font-size: 11px; color: var(--text-muted); font-weight: 500; letter-spacing: 0.3px; background: var(--accent-light); padding: 6px 14px; border-radius: 100px;">
+        <i data-lucide="sliders-horizontal" style="width: 12px; height: 12px;"></i>
+        используйте расширенные настройки поиска чтобы найти подходящий лот
+      </span>
+    </div>
     <div class="filter-search" style="position: relative;">
       <i data-lucide="search" style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); width: 16px; color: var(--text-muted);"></i>
       <input id="q" placeholder="Поиск вещей..." style="padding-left: 40px; width: 100%;" oninput="debounceSearch()">
     </div>
     <div class="filter-brand">
-      <input id="brandF" placeholder="Бренд" style="width: 100%;">
+      <input id="brandF" placeholder="Бренд" style="width: 100%;" oninput="debounceSearch()">
     </div>
     <div class="filter-size" style="display: flex; gap: 8px; align-items: center;">
-      <input id="sizeF" placeholder="Размер" style="flex: 1; min-width: 0;">
+      <input id="sizeF" placeholder="Размер" style="flex: 1; min-width: 0;" oninput="debounceSearch()">
       <button id="filterToggle" class="btn btn-outline" onclick="toggleFilters()" style="width: 40px; height: 40px; padding: 0; flex-shrink: 0;" title="Расширенные фильтры">
         <i data-lucide="sliders-horizontal" style="width: 16px;"></i>
       </button>
@@ -120,29 +125,18 @@
           <div id="filterCategoryChips" style="display: flex; gap: 6px; flex-wrap: wrap;">
             <button class="chip active" data-value="">Все</button>
             <button class="chip" data-value="Футболки">Футболки</button>
-            <button class="chip" data-value="Худи">Худи</button>
+            <button class="chip" data-value="Кофты">Кофты</button>
             <button class="chip" data-value="Куртки">Куртки</button>
             <button class="chip" data-value="Брюки">Брюки</button>
             <button class="chip" data-value="Джинсы">Джинсы</button>
             <button class="chip" data-value="Обувь">Обувь</button>
+            <button class="chip" data-value="Другое">Другое</button>
           </div>
           <input type="hidden" id="cat" value="">
         </div>
-        <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+        <div id="filterSubtypeRow" class="subtype-row">
           <span class="text-muted" style="font-size: 11px; font-weight: 800; text-transform: uppercase; flex-shrink: 0;">ПОДТИП:</span>
-          <div id="filterSubtypeChips" style="display: flex; gap: 6px; flex-wrap: wrap;">
-            <button class="chip active" data-value="">Все</button>
-            <button class="chip" data-value="Повседневное">Повседневное</button>
-            <button class="chip" data-value="Спорт">Спорт</button>
-            <button class="chip" data-value="Винтаж">Винтаж</button>
-            <button class="chip" data-value="Люкс">Люкс</button>
-            <button class="chip" data-value="Премиум">Премиум</button>
-            <button class="chip" data-value="Базовое">Базовое</button>
-            <button class="chip" data-value="Офис">Офис</button>
-            <button class="chip" data-value="Унисекс">Унисекс</button>
-            <button class="chip" data-value="Детское">Детское</button>
-            <button class="chip" data-value="Другое">Другое</button>
-          </div>
+          <div id="filterSubtypeChips" style="display: flex; gap: 6px; flex-wrap: wrap;"></div>
           <input type="hidden" id="subtypeF" value="">
         </div>
         <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
@@ -333,7 +327,7 @@
         <label class="text-muted" style="font-size: 11px; font-weight: 800; margin-bottom: 8px; display: block; text-transform: uppercase; letter-spacing: 0.05em;">Категория</label>
         <div id="categoryChips" style="display: flex; gap: 8px; overflow-x: auto; white-space: nowrap; padding: 4px 0 12px; width: 100%;">
           <button class="chip" data-value="Футболки" style="flex-shrink: 0;">Футболки</button>
-          <button class="chip" data-value="Худи" style="flex-shrink: 0;">Худи</button>
+          <button class="chip" data-value="Кофты" style="flex-shrink: 0;">Кофты</button>
           <button class="chip" data-value="Куртки" style="flex-shrink: 0;">Куртки</button>
           <button class="chip" data-value="Брюки" style="flex-shrink: 0;">Брюки</button>
           <button class="chip" data-value="Джинсы" style="flex-shrink: 0;">Джинсы</button>
@@ -342,20 +336,9 @@
         </div>
         <input type="hidden" id="catAdd" value="">
       </div>
-      <div style="grid-column: span 2;">
+      <div id="sellSubtypeRow" style="grid-column: span 2;">
         <label class="text-muted" style="font-size: 11px; font-weight: 800; margin-bottom: 8px; display: block; text-transform: uppercase; letter-spacing: 0.05em;">Подтип</label>
-        <div id="subtypeChips" style="display: flex; gap: 8px; overflow-x: auto; white-space: nowrap; padding: 4px 0 12px; width: 100%;">
-          <button class="chip" data-value="Повседневное" style="flex-shrink: 0;">Повседневное</button>
-          <button class="chip" data-value="Спорт" style="flex-shrink: 0;">Спорт</button>
-          <button class="chip" data-value="Винтаж" style="flex-shrink: 0;">Винтаж</button>
-          <button class="chip" data-value="Люкс" style="flex-shrink: 0;">Люкс</button>
-          <button class="chip" data-value="Премиум" style="flex-shrink: 0;">Премиум</button>
-          <button class="chip" data-value="Базовое" style="flex-shrink: 0;">Базовое</button>
-          <button class="chip" data-value="Офис" style="flex-shrink: 0;">Офис</button>
-          <button class="chip" data-value="Унисекс" style="flex-shrink: 0;">Унисекс</button>
-          <button class="chip" data-value="Детское" style="flex-shrink: 0;">Детское</button>
-          <button class="chip" data-value="Другое" style="flex-shrink: 0;">Другое</button>
-        </div>
+        <div id="subtypeChips" style="display: flex; gap: 8px; overflow-x: auto; white-space: nowrap; padding: 4px 0 12px; width: 100%;"></div>
         <input type="hidden" id="subtypeAdd" value="">
       </div>
       <div style="grid-column: span 2;">
@@ -433,17 +416,26 @@
   }
 
   // Auth Rendering
-  function renderAuth() {
+  async function renderAuth() {
     const nav = document.getElementById('nav-actions');
     me = localStorage.getItem("near_user");
     
     if (!me) {
       nav.innerHTML = `<button class="btn btn-primary" onclick="openModal('loginModal')">Войти</button>`;
     } else {
+      let avatarStyle = '';
+      try {
+        const r = await fetch(`/api/user/${encodeURIComponent(me)}`);
+        if (r.ok) {
+          const u = await r.json();
+          if (u.avatar) avatarStyle = `background-image: url('/uploads/${u.avatar}'); background-size: cover; background-position: center;`;
+        }
+      } catch (e) {}
+      const iconHtml = avatarStyle ? '' : '<i data-lucide="user" style="width: 18px;"></i>';
       nav.innerHTML = `
-        <button class="btn btn-premium" onclick="openModal('sellModal')" style="padding: 10px 24px; font-size: 14px; border-radius: 12px;">+ Продать</button>
+        <button class="btn btn-premium" onclick="document.getElementById('sellSubtypeRow').classList.remove('visible');document.querySelectorAll('#categoryChips .chip').forEach(c=>c.classList.remove('active'));openModal('sellModal')" style="padding: 10px 24px; font-size: 14px; border-radius: 12px;">+ Продать</button>
         <div class="user-badge" onclick="location.href='/profile'">
-          <div class="user-badge-icon"><i data-lucide="user" style="width: 18px;"></i></div>
+          <div class="user-badge-icon" style="${avatarStyle}">${iconHtml}</div>
           <span class="user-badge-name">@${me}</span>
         </div>
       `;
@@ -517,6 +509,44 @@
     renderItems();
   }
 
+  // Subtype map by category
+  const subtypeMap = {
+    'Футболки': ['Короткий рукав', 'Длинный рукав', 'Оверсайз', 'Поло', 'Принт', 'Однотонные', 'Спорт', 'Винтаж', 'Базовые', 'Другое'],
+    'Кофты': ['Худи', 'Свитеры', 'Олимпийки', 'Толстовки', 'Кардиганы', 'Водолазки', 'Другое'],
+    'Куртки': ['Пуховики', 'Кожаные', 'Джинсовые', 'Спортивные', 'Тренчи', 'Пальто', 'Бомберы', 'Другое'],
+    'Брюки': ['Классические', 'Спортивные', 'Чиносы', 'Карго', 'Шорты', 'Другое'],
+    'Джинсы': ['Скинни', 'Прямые', 'Зауженные', 'Клеш', 'Свободные', 'Другое'],
+    'Обувь': ['Кроссовки', 'Кеды', 'Ботинки', 'Каблуки', 'Сапоги', 'Сандалии', 'Туфли', 'Другое'],
+    'Другое': ['Повседневное', 'Спорт', 'Винтаж', 'Люкс', 'Премиум', 'Базовое', 'Офис', 'Унисекс', 'Детское', 'Другое'],
+  };
+
+  function updateSubtypes(category, chipsId, inputId, isFilter) {
+    const container = document.getElementById(chipsId);
+    if (!container) return;
+    const subtypes = subtypeMap[category] || ['Повседневное', 'Спорт', 'Винтаж', 'Люкс', 'Премиум', 'Базовое', 'Офис', 'Унисекс', 'Детское', 'Другое'];
+    container.innerHTML = '';
+    if (isFilter) {
+      const allChip = document.createElement('button');
+      allChip.className = 'chip active';
+      allChip.setAttribute('data-value', '');
+      allChip.textContent = 'Все';
+      container.appendChild(allChip);
+    }
+    subtypes.forEach(s => {
+      const chip = document.createElement('button');
+      chip.className = 'chip' + (isFilter ? '' : '');
+      chip.setAttribute('data-value', s);
+      chip.textContent = s;
+      container.appendChild(chip);
+    });
+    document.getElementById(inputId).value = '';
+    if (isFilter) {
+      setupFilterChips(chipsId, inputId);
+    } else {
+      setupSellChips(chipsId, inputId);
+    }
+  }
+
   // Home Filter Chips
   function setupFilterChips(containerId, inputId) {
     const container = document.getElementById(containerId);
@@ -532,7 +562,29 @@
     });
   }
   setupFilterChips('filterCategoryChips', 'cat');
-  setupFilterChips('filterSubtypeChips', 'subtypeF');
+
+  // Override filter category click to update subtypes
+  document.querySelectorAll('#filterCategoryChips .chip').forEach(chip => {
+    chip.onclick = () => {
+      document.querySelectorAll('#filterCategoryChips .chip').forEach(c => c.classList.remove('active'));
+      chip.classList.add('active');
+      const cat = chip.getAttribute('data-value');
+      document.getElementById('cat').value = cat;
+      const subtypeRow = document.getElementById('filterSubtypeRow');
+      if (cat) {
+        subtypeRow.classList.add('visible');
+        updateSubtypes(cat, 'filterSubtypeChips', 'subtypeF', true);
+      } else {
+        subtypeRow.classList.remove('visible');
+        const container = document.getElementById('filterSubtypeChips');
+        container.innerHTML = '<button class="chip active" data-value="">Все</button>';
+        document.getElementById('subtypeF').value = '';
+        setupFilterChips('filterSubtypeChips', 'subtypeF');
+      }
+      applyFilters();
+    };
+  });
+
   setupFilterChips('filterConditionChips', 'condF');
 
   function resetFilters() {
@@ -546,6 +598,11 @@
         c.classList.remove('active');
         if(c.getAttribute('data-value') === '') c.classList.add('active');
     });
+    // Reset subtype chips to "Все" only
+    document.getElementById('filterSubtypeRow').classList.remove('visible');
+    const container = document.getElementById('filterSubtypeChips');
+    container.innerHTML = '<button class="chip active" data-value="">Все</button>';
+    setupFilterChips('filterSubtypeChips', 'subtypeF');
     window.history.replaceState({}, '', window.location.pathname);
     renderItems();
   }
@@ -611,7 +668,7 @@
                 <div class="product-meta">
                   <div class="product-seller">
                     <div class="seller-avatar-mini" style="${item.seller_avatar ? `background-image: url('/uploads/${item.seller_avatar}')` : ''}"></div>
-                    <span>@${item.seller}</span>
+                    <span>@${item.seller} ${item.seller_rating > 0 ? `<span style="color:var(--text); opacity:0.7; font-size:10px; margin-left:4px;">★ ${item.seller_rating}</span>` : ''}</span>
                   </div>
                   <span class="text-muted">${item.size || 'No size'}</span>
                 </div>
@@ -665,9 +722,21 @@
       };
     });
   }
-  setupChips('categoryChips', 'catAdd');
+  function setupSellChips(containerId, inputId) {
+    setupChips(containerId, inputId);
+  }
+  // Override for category chips in sell modal
+  document.querySelectorAll('#categoryChips .chip').forEach(chip => {
+    chip.onclick = () => {
+      document.querySelectorAll('#categoryChips .chip').forEach(c => c.classList.remove('active'));
+      chip.classList.add('active');
+      const cat = chip.getAttribute('data-value');
+      document.getElementById('catAdd').value = cat;
+      document.getElementById('sellSubtypeRow').classList.add('visible');
+      updateSubtypes(cat, 'subtypeChips', 'subtypeAdd', false);
+    };
+  });
   setupChips('conditionDots', 'condAdd');
-  setupChips('subtypeChips', 'subtypeAdd');
 
   // Theme Toggle
   const themeToggle = document.getElementById('themeToggle');
@@ -763,6 +832,52 @@
     document.getElementById('filterPanel').classList.add('open');
     document.getElementById('filterToggle').classList.add('active');
   }
+
+  // Initialize subtypes based on current category filter
+  const initialCat = document.getElementById('cat').value || '';
+  const subtypeRow = document.getElementById('filterSubtypeRow');
+  if (initialCat) {
+    subtypeRow.classList.add('visible');
+    updateSubtypes(initialCat, 'filterSubtypeChips', 'subtypeF', true);
+  } else {
+    subtypeRow.classList.remove('visible');
+    const container = document.getElementById('filterSubtypeChips');
+    container.innerHTML = '<button class="chip active" data-value="">Все</button>';
+    setupFilterChips('filterSubtypeChips', 'subtypeF');
+  }
+  // Restore subtype from URL after initialization
+  if (p.subtype) {
+    document.getElementById('subtypeF').value = p.subtype;
+    const subtypeChips = document.querySelectorAll('#filterSubtypeChips .chip');
+    subtypeChips.forEach(c => {
+      if (c.getAttribute('data-value') === p.subtype) {
+        c.classList.add('active');
+      } else {
+        c.classList.remove('active');
+      }
+    });
+  }
+  // Activate correct category chip from URL
+  if (p.cat) {
+    document.querySelectorAll('#filterCategoryChips .chip').forEach(c => {
+      if (c.getAttribute('data-value') === p.cat) {
+        c.classList.add('active');
+      } else {
+        c.classList.remove('active');
+      }
+    });
+  }
+  // Activate correct condition chip from URL
+  if (p.cond) {
+    document.querySelectorAll('#filterConditionChips .chip').forEach(c => {
+      if (c.getAttribute('data-value') === p.cond) {
+        c.classList.add('active');
+      } else {
+        c.classList.remove('active');
+      }
+    });
+  }
+  document.getElementById('sellSubtypeRow').classList.remove('visible');
 
   renderAuth();
   renderItems();

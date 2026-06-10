@@ -189,6 +189,7 @@ db.serialize(() => {
   ensureColumn("users", "is_admin", "is_admin INTEGER DEFAULT 0");
   ensureColumn("users", "blocked", "blocked INTEGER DEFAULT 0");
   ensureColumn("users", "blocked_reason", "blocked_reason TEXT DEFAULT ''");
+  ensureColumn("messages", "is_read", "is_read INTEGER DEFAULT 0");
 });
 
 // ===============================
@@ -364,17 +365,21 @@ app.post("/api/user/update", upload.single("avatar"), (req, res) => {
 
 app.get("/api/my/purchases", (req, res) => {
   const nick = cleanNick(req.query.nick);
-  db.all(`SELECT items.* FROM purchases JOIN items ON purchases.item_id = items.id WHERE purchases.buyer=?`, [nick], (e, rows) => {
+  db.all(`SELECT items.*, COUNT(purchases.id) as count,
+          (SELECT AVG(rating) FROM reviews JOIN items AS items2 ON reviews.item_id = items2.id WHERE items2.seller = items.seller) as seller_rating
+          FROM purchases JOIN items ON purchases.item_id = items.id WHERE purchases.buyer=? GROUP BY items.id ORDER BY MAX(purchases.created_at) DESC`, [nick], (e, rows) => {
     if (e) return res.status(500).json({ error: "db error" });
-    res.json((rows || []).map(mapItemRow));
+    res.json((rows || []).map(r => ({ ...mapItemRow(r), count: r.count, seller_rating: r.seller_rating ? Math.round(r.seller_rating * 10) / 10 : 0 })));
   });
 });
 
 app.get("/api/my/sales", (req, res) => {
   const nick = cleanNick(req.query.nick);
-  db.all(`SELECT items.* FROM purchases JOIN items ON purchases.item_id = items.id WHERE items.seller=?`, [nick], (e, rows) => {
+  db.all(`SELECT items.*, COUNT(purchases.id) as sold_count,
+          (SELECT AVG(rating) FROM reviews JOIN items AS items2 ON reviews.item_id = items2.id WHERE items2.seller = items.seller) as seller_rating
+          FROM purchases JOIN items ON purchases.item_id = items.id WHERE items.seller=? GROUP BY items.id ORDER BY MAX(purchases.created_at) DESC`, [nick], (e, rows) => {
     if (e) return res.status(500).json({ error: "db error" });
-    res.json((rows || []).map(mapItemRow));
+    res.json((rows || []).map(r => ({ ...mapItemRow(r), sold_count: r.sold_count, seller_rating: r.seller_rating ? Math.round(r.seller_rating * 10) / 10 : 0 })));
   });
 });
 
@@ -383,11 +388,22 @@ app.get("/api/my/sales", (req, res) => {
 // ===============================
 app.get("/api/items", (req, res) => {
   db.all(
-    `SELECT * FROM items WHERE status='approved' ORDER BY id DESC`,
+    `SELECT items.*, users.avatar as seller_avatar,
+      (SELECT AVG(rating) FROM reviews JOIN items AS items2 ON reviews.item_id = items2.id WHERE items2.seller = items.seller) as seller_rating
+     FROM items 
+     LEFT JOIN users ON items.seller = users.nickname 
+     WHERE items.status='approved' 
+     ORDER BY items.id DESC`,
     (e, rows) => {
       if (e) return res.status(500).json({ error: "db error" });
 
-      res.json((rows || []).map(mapItemRow));
+      const items = (rows || []).map(r => {
+        const item = mapItemRow(r);
+        item.seller_avatar = r.seller_avatar || null;
+        item.seller_rating = r.seller_rating ? Math.round(r.seller_rating * 10) / 10 : 0;
+        return item;
+      });
+      res.json(items);
     }
   );
 });
@@ -406,7 +422,10 @@ app.get("/api/item/:seller/:id", (req, res) => {
     const item = mapItemRow(row);
     db.get(`SELECT nickname, avatar FROM users WHERE nickname=?`, [seller], (e2, u) => {
       item.seller_avatar = (u && u.avatar) ? u.avatar : null;
-      res.json(item);
+      db.get(`SELECT AVG(rating) as avg FROM reviews JOIN items ON reviews.item_id = items.id WHERE items.seller=?`, [seller], (e3, stats) => {
+        item.seller_rating = stats && stats.avg ? Math.round(stats.avg * 10) / 10 : 0;
+        res.json(item);
+      });
     });
   });
 });
@@ -508,10 +527,15 @@ app.post("/api/item/:id/sold", (req, res) => {
       db.run(`INSERT INTO purchases(buyer, item_id) VALUES(?,?)`, [buyer, id]);
     }
 
-    db.run(`UPDATE items SET quantity_sold=? WHERE id=?`, [newSold, id], () => {
+    db.run(`UPDATE items SET quantity_sold=? WHERE id=?`, [newSold, id], function (eUpd) {
+      if (eUpd) return res.status(500).json({ error: "db error" });
+      const left = row.quantity - newSold;
+      if (left <= 0) {
+        db.run(`UPDATE items SET status='sold' WHERE id=?`, [id], () => {});
+      }
       addNotif(buyer, `Продавец подтвердил продажу "${row.title}"! Оставьте отзыв на странице товара.`);
       addNotif(seller, `Вы отметили продажу "${row.title}" покупателю @${buyer}!`);
-      res.json({ ok: true, quantity_sold: newSold, quantity_left: row.quantity - newSold });
+      res.json({ ok: true, quantity_sold: newSold, quantity_left: left });
     });
   });
   });
@@ -617,6 +641,31 @@ app.get("/api/user/:nick/reviews", (req, res) => {
           total: stats.count || 0,
         });
       });
+    }
+  );
+});
+
+app.get("/api/purchasable-items", (req, res) => {
+  const seller = cleanNick(req.query.seller);
+  const buyer = cleanNick(req.query.buyer);
+  if (!seller || !buyer) return res.status(400).json({ error: "bad params" });
+
+  db.all(
+    `SELECT items.id, items.title, items.price, items.images_json
+     FROM purchases
+     JOIN items ON purchases.item_id = items.id
+     WHERE items.seller=? AND purchases.buyer=?
+       AND items.id NOT IN (SELECT item_id FROM reviews WHERE buyer=?)
+     GROUP BY items.id`,
+    [seller, buyer, buyer],
+    (e, rows) => {
+      if (e) return res.status(500).json({ error: "db error" });
+      res.json((rows || []).map(r => ({
+        id: r.id,
+        title: r.title,
+        price: r.price,
+        image: parseImages(r.images_json)[0] || null,
+      })));
     }
   );
 });
@@ -746,20 +795,22 @@ app.get("/api/chats", (req, res) => {
   db.all(
     `SELECT
        CASE WHEN from_nick = ? THEN to_nick ELSE from_nick END AS withNick,
-       MAX(created_at) AS lastAt
+       MAX(created_at) AS lastAt,
+       SUM(CASE WHEN to_nick = ? AND is_read = 0 THEN 1 ELSE 0 END) AS unread
      FROM messages
      WHERE from_nick = ? OR to_nick = ?
      GROUP BY withNick
      ORDER BY lastAt DESC
      LIMIT 100`,
-    [me, me, me],
+    [me, me, me, me],
     (e, rows) => {
       if (e) return res.status(500).json({ error: "db error" });
 
       const out = (rows || []).map(r => ({
         withNick: r.withNick,
-        with: r.withNick,      // оставил для совместимости, не мешает
-        lastAt: r.lastAt || 0
+        with: r.withNick,
+        lastAt: r.lastAt || 0,
+        unread: r.unread || 0
       }));
 
       res.json(out);
@@ -803,6 +854,16 @@ app.post("/api/chat/send", upload.single("image"), (req, res) => {
       res.json({ ok: true, id: this.lastID, image });
     }
   );
+});
+
+app.post("/api/chat/read", (req, res) => {
+  const me = cleanNick(req.body.me);
+  const withNick = cleanNick(req.body.with);
+  if (!me || !withNick) return res.status(400).json({ error: "bad input" });
+  db.run(`UPDATE messages SET is_read=1 WHERE from_nick=? AND to_nick=?`, [withNick, me], function (e) {
+    if (e) return res.status(500).json({ error: "db error" });
+    res.json({ ok: true, changed: this.changes });
+  });
 });
 
 // ===============================

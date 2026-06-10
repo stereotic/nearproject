@@ -179,6 +179,38 @@
   border-bottom-right-radius: 4px;
 }
 
+.near-msg-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  max-width: 100%;
+}
+.near-msg-row .near-msg {
+  max-width: calc(100% - 38px);
+}
+.near-msg-avatar {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+  background: var(--surface);
+  border: 2px solid var(--border);
+  margin-bottom: 4px;
+}
+.near-msg-avatar-letter {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--text-muted);
+  background: var(--surface-hover);
+  border-color: var(--border);
+}
+.near-msg-content {
+  min-width: 0;
+}
 .near-msg-img {
   display: block;
   max-width: 100%;
@@ -195,6 +227,15 @@
   background: transparent !important;
   border-radius: 12px;
   box-shadow: none;
+}
+.near-msg-img-only .near-msg-content {
+  background: transparent !important;
+  border: none;
+  box-shadow: none;
+  padding: 0;
+}
+.near-msg-img-only .near-msg-avatar {
+  display: block;
 }
 
 .near-msg-img-only .near-msg-img {

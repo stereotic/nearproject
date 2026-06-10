@@ -59,6 +59,9 @@ body {
   -webkit-font-smoothing: antialiased;
 
 }
+[data-lucide="star"] {
+  fill: currentColor;
+}
 
 body::before {
   content: '';
@@ -687,4 +690,38 @@ div::-webkit-scrollbar-thumb { background: var(--border); border-radius: 10px; }
   .tab-btn { font-size: 10px !important; }
   .seller-box { padding: 12px; }
   .action-bar .btn { height: 40px !important; font-size: 12px !important; }
+}
+
+#filterSubtypeRow {
+  overflow: hidden;
+  max-height: 0;
+  opacity: 0;
+  padding: 0;
+  margin: 0;
+  transition: max-height 0.4s ease, opacity 0.35s ease, padding 0.35s ease, margin 0.35s ease;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+#filterSubtypeRow.visible {
+  max-height: 200px;
+  opacity: 1;
+  padding: 4px 0;
+  margin: 4px 0;
+}
+
+#sellSubtypeRow {
+  overflow: hidden;
+  max-height: 0;
+  opacity: 0;
+  padding: 0;
+  margin: 0;
+  transition: max-height 0.4s ease, opacity 0.35s ease, padding 0.35s ease, margin 0.35s ease;
+}
+#sellSubtypeRow.visible {
+  max-height: 200px;
+  opacity: 1;
+  padding: 4px 0;
+  margin: 4px 0;
 }

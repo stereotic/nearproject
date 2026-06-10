@@ -152,7 +152,7 @@
     .review-stars i {
       width: 14px;
       height: 14px;
-      color: #f59e0b;
+      color: var(--text);
     }
     .review-item-title {
       font-weight: 700;
@@ -362,6 +362,7 @@
       } else {
         const r = await fetch(`/api/my/${key}?nick=${encodeURIComponent(me)}`).catch(() => ({ json: () => [] }));
         items = await r.json().catch(() => []);
+        if (key === 'sales') document.getElementById('countSales').textContent = items.length;
       }
 
       box.innerHTML = '';
@@ -374,16 +375,18 @@
         const card = document.createElement('div');
         card.className = 'card product-card fade-in';
         const imgUrl = item.images && item.images[0] ? `/uploads/${item.images[0]}` : '/placeholder.jpg';
+        const q = item.count || item.sold_count || 0;
+        const count = q > 1 ? `<div style="position:absolute;top:8px;right:8px;background:var(--primary);color:var(--bg);font-size:11px;font-weight:800;padding:4px 8px;border-radius:8px;z-index:2;">${q} шт.</div>` : '';
         
         card.innerHTML = `
           <a href="/${item.seller}/${item.id}">
-            <div class="product-img" style="background-image: url('${imgUrl}')"></div>
+            <div class="product-img" style="background-image: url('${imgUrl}');position:relative;">${count}</div>
             <div class="product-info">
               <div class="product-price">${item.price.toLocaleString()} ₽</div>
               <div class="product-title">${item.title}</div>
               <div class="product-meta">
                 <div class="product-seller">
-                  <span>@${item.seller}</span>
+                  <span>@${item.seller} ${item.seller_rating > 0 ? `<span style="color:var(--text); opacity:0.7; font-size:10px; margin-left:4px;">★ ${item.seller_rating}</span>` : ''}</span>
                 </div>
                 <span class="text-muted">${item.size || 'No size'}</span>
               </div>
@@ -415,7 +418,7 @@
         card.className = 'review-card fade-in';
         const date = rev.created_at ? new Date(rev.created_at * 1000).toLocaleDateString('ru-RU') : '';
         const starsHtml = Array(5).fill(0).map((_, i) =>
-          `<i data-lucide="star" style="width:14px;height:14px;${i < rev.rating ? '' : 'opacity:0.25'}"></i>`
+          `<i data-lucide="star" style="width:14px;height:14px;${i < rev.rating ? 'fill:currentColor;' : 'opacity:0.25'}"></i>`
         ).join('');
         card.innerHTML = `
           <div class="review-top">

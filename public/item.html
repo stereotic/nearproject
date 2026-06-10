@@ -31,11 +31,18 @@
       width: 100%;
       aspect-ratio: 4/5;
       border-radius: var(--radius-lg);
-      background-size: contain;
-      background-repeat: no-repeat;
-      background-position: center;
       cursor: zoom-in;
       background-color: var(--surface);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+    .gallery-main img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      image-rendering: auto;
     }
 
     .gallery-thumbs {
@@ -259,15 +266,15 @@
       color: var(--text-muted);
       margin-left: auto;
     }
-    .review-stars {
-      display: flex;
-      gap: 2px;
-    }
-    .review-stars i {
-      width: 14px;
-      height: 14px;
-      color: #f59e0b;
-    }
+    .review-stars { display: flex; gap: 2px; }
+    .review-stars i { width: 14px; height: 14px; color: var(--text); }
+    
+    .star-picker { display:flex;gap:4px;justify-content:center;margin:16px 0; }
+    .star-picker span { cursor:pointer;color:#ccc;user-select:none;padding:4px;display:flex; }
+    .star-picker span i { width: 32px; height: 32px; pointer-events: none; fill: none; transition: all 0.2s; }
+    .star-picker span.active, .star-picker span.hover { color:#facc15 !important; }
+    .star-picker span.active i, .star-picker span.hover i { fill: currentColor; transform: scale(1.1); }
+    
     .review-text {
       font-size: 14px;
       color: var(--text-muted);
@@ -288,7 +295,7 @@
     }
     .star-picker span.active,
     .star-picker span.hover {
-      color: #f59e0b !important;
+      color: var(--text) !important;
     }
 
     .avg-rating-badge {
@@ -299,7 +306,7 @@
       font-weight: 700;
     }
     .avg-rating-badge i {
-      color: #f59e0b;
+      color: var(--text);
     }
 
     /* Recommendations Section */
@@ -505,7 +512,7 @@
   <div class="product-grid fade-in">
     <!-- Gallery -->
     <div>
-      <div id="mainImg" class="gallery-main"></div>
+      <div id="mainImg" class="gallery-main"><img id="mainImgEl" src="" alt=""></div>
       <div id="thumbs" class="gallery-thumbs"></div>
     </div>
 
@@ -549,7 +556,10 @@
           <div id="sellerAva" class="seller-avatar"></div>
           <div>
             <div id="sellerNick" style="font-weight: 800;">@username</div>
-            <div class="text-muted" style="font-size: 12px;">Продавец</div>
+            <div style="display: flex; align-items: center; gap: 6px;">
+              <div class="text-muted" style="font-size: 12px;">Продавец</div>
+              <span id="sellerRating" style="font-size: 12px; font-weight: 700; display: none;"></span>
+            </div>
           </div>
         </div>
       </div>
@@ -643,12 +653,12 @@
     <i data-lucide="star" style="width: 48px; height: 48px; margin-bottom: 16px;"></i>
     <h2>Оценить товар</h2>
     <p class="text-muted" style="font-size: 13px;">Поставьте оценку и оставьте отзыв</p>
-    <div class="star-picker" id="starPicker" style="display:flex;gap:4px;justify-content:center;margin:16px 0;">
-      <span data-val="1" style="font-size:36px;cursor:pointer;color:#ccc;user-select:none;padding:4px;">★</span>
-      <span data-val="2" style="font-size:36px;cursor:pointer;color:#ccc;user-select:none;padding:4px;">★</span>
-      <span data-val="3" style="font-size:36px;cursor:pointer;color:#ccc;user-select:none;padding:4px;">★</span>
-      <span data-val="4" style="font-size:36px;cursor:pointer;color:#ccc;user-select:none;padding:4px;">★</span>
-      <span data-val="5" style="font-size:36px;cursor:pointer;color:#ccc;user-select:none;padding:4px;">★</span>
+    <div class="star-picker" id="starPicker">
+      <span data-val="1"><i data-lucide="star"></i></span>
+      <span data-val="2"><i data-lucide="star"></i></span>
+      <span data-val="3"><i data-lucide="star"></i></span>
+      <span data-val="4"><i data-lucide="star"></i></span>
+      <span data-val="5"><i data-lucide="star"></i></span>
     </div>
     <textarea id="reviewText" class="modal-input" placeholder="Ваш отзыв (необязательно)" style="width: 100%; height: 100px; resize: none; margin: 12px 0;"></textarea>
     <div class="delete-confirm-btns">
@@ -743,6 +753,11 @@
       if (item.seller_avatar) {
         document.getElementById('sellerAva').style.backgroundImage = `url('/uploads/${item.seller_avatar}')`;
       }
+      if (item.seller_rating) {
+        const ratingEl = document.getElementById('sellerRating');
+        ratingEl.textContent = '★ ' + item.seller_rating;
+        ratingEl.style.display = 'inline';
+      }
 
       // Quantity display
       const qtyLeft = item.quantity - item.quantity_sold;
@@ -772,7 +787,7 @@
       const thumbBox = document.getElementById('thumbs');
       
       if (imgs.length > 0) {
-        main.style.backgroundImage = `url('/uploads/${imgs[0]}')`;
+        document.getElementById('mainImgEl').src = `/uploads/${imgs[0]}`;
         main.onclick = () => openLightbox(0);
         
         imgs.forEach((img, i) => {
@@ -780,7 +795,7 @@
           t.className = `thumb ${i === 0 ? 'active' : ''}`;
           t.style.backgroundImage = `url('/uploads/${img}')`;
           t.onclick = () => {
-             main.style.backgroundImage = `url('/uploads/${img}')`;
+             document.getElementById('mainImgEl').src = `/uploads/${img}`;
              main.onclick = () => openLightbox(i);
              document.querySelectorAll('.thumb').forEach(x => x.classList.remove('active'));
              t.classList.add('active');
@@ -826,7 +841,7 @@
           card.className = 'review-card fade-in';
           const date = r.created_at ? new Date(r.created_at * 1000).toLocaleDateString('ru-RU') : '';
           const starsHtml = Array(5).fill(0).map((_, i) =>
-            `          <i data-lucide="star" style="width:14px;height:14px;${i < r.rating ? '' : 'opacity:0.25'}"></i>`
+            `<i data-lucide="star" style="width:14px;height:14px;${i < r.rating ? 'fill:currentColor;' : 'opacity:0.25'}"></i>`
           ).join('');
           const avatar = r.avatar ? `url('/uploads/${r.avatar}')` : '';
           card.innerHTML = `
@@ -867,11 +882,10 @@
 
   let selectedRating = 0;
 
-  function onStarClick(span) {
-    const val = parseInt(span.getAttribute('data-val'));
+  function onStarClick(val) {
     selectedRating = val;
     document.querySelectorAll('#starPicker span').forEach(function(el) {
-      var v = parseInt(el.getAttribute('data-val'));
+      var v = parseInt(el.dataset.val);
       if (v <= val) {
         el.classList.add('active');
         el.classList.remove('hover');
@@ -893,23 +907,19 @@
   }
 
   document.getElementById('starPicker').onclick = function(e) {
-    var el = e.target;
-    if (el.tagName !== 'SPAN') return;
-    onStarClick(el);
+    const span = e.target.closest('span');
+    if (!span) return;
+    onStarClick(parseInt(span.dataset.val));
   };
 
   document.getElementById('starPicker').onmouseover = function(e) {
     if (selectedRating) return;
-    var el = e.target;
-    if (el.tagName !== 'SPAN') return;
-    var val = parseInt(el.getAttribute('data-val'));
+    const span = e.target.closest('span');
+    if (!span) return;
+    const val = parseInt(span.dataset.val);
     document.querySelectorAll('#starPicker span').forEach(function(s) {
-      var v = parseInt(s.getAttribute('data-val'));
-      if (v <= val) {
-        s.classList.add('hover');
-      } else {
-        s.classList.remove('hover');
-      }
+      if (parseInt(s.dataset.val) <= val) s.classList.add('hover');
+      else s.classList.remove('hover');
     });
   };
 
@@ -1057,7 +1067,7 @@
 
   async function checkBuyerNick(val) {
     const status = document.getElementById('buyerNickStatus');
-    val = val.trim();
+    val = val.trim().replace(/^@+/, '');
     if (!val) {
       status.textContent = '';
       buyerExists = false;
@@ -1080,7 +1090,7 @@
   }
 
   async function confirmSold() {
-    const buyer = document.getElementById('soldBuyerNick').value.trim();
+    const buyer = document.getElementById('soldBuyerNick').value.trim().replace(/^@+/, '');
     if (!buyer) return toast('Введите ник покупателя');
     if (!buyerExists) return toast('Пользователь не найден в системе');
     const qty = parseInt(document.getElementById('soldQty').value, 10) || 1;
@@ -1100,6 +1110,10 @@
         toast(`Продано ${qty} шт. покупателю @${buyer}!`);
         currentItem.quantity_sold = data.quantity_sold;
         const left = currentItem.quantity - data.quantity_sold;
+        if (left <= 0) {
+          toast('Товар полностью продан');
+          setTimeout(() => location.href = '/', 1500);
+        }
         document.getElementById('qtySpec').textContent = left > 0 ? `${left} шт.` : 'Нет в наличии';
       } else {
         toast(data.error || 'Ошибка');

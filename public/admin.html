@@ -335,7 +335,7 @@
       transition: border-color 0.2s ease;
     }
     .review-item:hover { border-color: var(--accent); }
-    .review-stars { color: #f59e0b; letter-spacing: 1px; font-size: 14px; }
+    .review-stars { color: var(--text); letter-spacing: 1px; font-size: 14px; }
 
     .back-btn {
       display: inline-flex;
@@ -840,6 +840,9 @@
     btn.classList.add('active');
     container.querySelectorAll('[id^="subtab-"]').forEach(d => d.style.display = 'none');
     document.getElementById('subtab-' + sub).style.display = 'block';
+    const bodyMap = { itemReports: 'itemReportsBody', msgReports: 'msgReportsBody', profileReports: 'profileReportsBody' };
+    const bodyId = bodyMap[sub];
+    if (bodyId) document.getElementById(bodyId).innerHTML = '<tr><td colspan="6" style="text-align:center;padding:32px;color:var(--text-muted);">Загрузка...</td></tr>';
     if (sub === 'itemReports') loadReports('item');
     if (sub === 'msgReports') loadReports('message');
     if (sub === 'profileReports') loadReports('profile');
@@ -851,6 +854,9 @@
       const container = document.getElementById('tab-reports');
       container.querySelectorAll('.sub-tab').forEach((b,i) => b.classList.toggle('active', i===0));
       container.querySelectorAll('[id^="subtab-"]').forEach((d,i) => d.style.display = i===0 ? 'block' : 'none');
+      ['itemReportsBody','msgReportsBody','profileReportsBody'].forEach(id => {
+        document.getElementById(id).innerHTML = '<tr><td colspan="6" style="text-align:center;padding:32px;color:var(--text-muted);">Загрузка...</td></tr>';
+      });
       loadReports('item');
     }
     if (name === 'users') loadUsers();
@@ -951,7 +957,7 @@
   // --- ЖАЛОБЫ ---
   async function loadReports(type) {
     const list = await api('/api/admin/reports?type=' + type);
-    const bodyMap = { item: 'itemReportsBody', msg: 'msgReportsBody', profile: 'profileReportsBody' };
+    const bodyMap = { item: 'itemReportsBody', message: 'msgReportsBody', profile: 'profileReportsBody' };
     const bodyId = bodyMap[type] || 'itemReportsBody';
     const body = document.getElementById(bodyId);
     body.innerHTML = list.length ? '' : '<tr><td colspan="6" style="text-align:center;padding:32px;color:var(--text-muted);">Нет жалоб</td></tr>';

@@ -26,6 +26,7 @@
 
     <div class="near-chat" id="nearChatWindow">
       <div class="near-chat-head">
+        <button class="near-back" id="nearChatBack" aria-label="Назад" style="background:none;border:none;color:var(--text);cursor:pointer;padding:4px;display:flex;align-items:center;"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><path d="M12 19l-7-7 7-7"/></svg></button>
         <span id="nearChatTitle" style="font-weight: 800;">Чат</span>
         <button class="near-x" id="nearChatClose">✕</button>
       </div>
@@ -91,6 +92,7 @@
   const chatFile = document.getElementById("nearChatFile");
 
   let activeOther = null;
+  let otherAvatar = null;
   let lastMsgSig = "";
 
   function hide(el){ el.style.display = "none"; }
@@ -107,9 +109,14 @@
   document.getElementById("nearNotifClose").onclick = () => hide(notifPanel);
   document.getElementById("nearChatsClose").onclick = () => hide(chatsPanel);
   document.getElementById("nearChatClose").onclick = () => hide(chatWindow);
+  document.getElementById("nearChatBack").onclick = () => { hide(chatWindow); show(chatsPanel); loadChats(); };
 
   bellBtn.onclick = (e) => { e.stopPropagation(); toggle(notifPanel); if(notifPanel.style.display==="flex") loadNotifs(true); };
-  chatBtn.onclick = (e) => { e.stopPropagation(); toggle(chatsPanel); if(chatsPanel.style.display==="flex") loadChats(); };
+  chatBtn.onclick = (e) => {
+    e.stopPropagation();
+    toggle(chatsPanel);
+    if(chatsPanel.style.display==="flex") loadChats();
+  };
 
   document.addEventListener("click", (e) => { if (!root.contains(e.target)) closeAll(); });
 
@@ -133,7 +140,8 @@
     });
 
     if (markRead && unread > 0) {
-      fetch("/api/notifs/read", { method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify({ me }) });
+      await fetch("/api/notifs/read", { method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify({ me }) });
+      bellBadge.style.display = "none";
     }
   }
 
@@ -142,14 +150,32 @@
     const r = await fetch(`/api/chats?me=${encodeURIComponent(me)}`);
     const list = await r.json();
     
+    let totalUnread = 0;
     chatsBody.innerHTML = list.length ? "" : `<div style="color:#777; padding:20px; text-align:center;">Нет сообщений</div>`;
     list.forEach(c => {
+      totalUnread += c.unread || 0;
       const row = document.createElement("div");
       row.className = "near-row";
-      row.innerHTML = `<div class="near-row-title">@${c.withNick}</div><div class="near-row-sub">Нажмите, чтобы открыть чат</div>`;
+      row.innerHTML = `<div class="near-row-title">@${c.withNick}${c.unread ? ` <span style="background:var(--primary);color:var(--bg);font-size:10px;font-weight:900;padding:2px 7px;border-radius:999px;vertical-align:middle;">${c.unread}</span>` : ''}</div><div class="near-row-sub">${c.unread ? 'Новые сообщения' : 'Нет новых сообщений'}</div>`;
       row.onclick = () => openChat(c.withNick);
       chatsBody.appendChild(row);
     });
+    if (totalUnread > 0) {
+      chatBadge.style.display = "flex";
+      chatBadge.textContent = totalUnread;
+    } else chatBadge.style.display = "none";
+  }
+
+  async function updateChatBadge(){
+    if(!me) return;
+    try {
+      const r = await fetch(`/api/chats?me=${encodeURIComponent(me)}`);
+      const list = await r.json();
+      let total = 0;
+      list.forEach(c => { total += c.unread || 0; });
+      if (total > 0) { chatBadge.style.display = "flex"; chatBadge.textContent = total; }
+      else chatBadge.style.display = "none";
+    } catch(e) {}
   }
 
   // --- ALERT MODAL ---
@@ -183,6 +209,19 @@
     closeAll();
     root.style.display = "block";
     chatTitle.textContent = "@" + other;
+    otherAvatar = null;
+    try {
+      const r = await fetch(`/api/user/${encodeURIComponent(other)}`);
+      if (r.ok) {
+        const u = await r.json();
+        if (u && u.avatar) otherAvatar = '/uploads/' + u.avatar;
+        else otherAvatar = 'initials:' + other;
+      }
+    } catch(e){}
+    try {
+      await fetch("/api/chat/read", { method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify({ me, with: other }) });
+      await updateChatBadge();
+    } catch(e){}
     lastMsgSig = "";
     try { await loadChatMessages(true); } catch(e) { console.error(e); }
     chatWindow.style.display = "flex";
@@ -224,24 +263,38 @@
   function renderMsgBox(m){
     const hasText = !!m.text;
     const hasImg = !!m.image;
-    const box = document.createElement("div");
+    const bubble = document.createElement("div");
     let cls = "near-msg" + (m.from_nick === me ? " me" : "");
     if(hasImg && !hasText) cls += " near-msg-img-only";
-    box.className = cls;
-    let html = "";
+    bubble.className = cls;
+    let html = `<div class="near-msg-content">`;
     if(hasImg) html += `<img class="near-msg-img" src="${m.image}" />`;
     if(hasText) html += `<div>${m.text}</div>`;
     html += `<div class="t">${new Date(m.created_at*1000).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</div>`;
+    html += `</div>`;
     if(m.from_nick !== me){
       html += `<button class="near-msg-report" onclick="window.reportMsg(${m.id},'${m.from_nick}')" title="Пожаловаться"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg></button>`;
     }
-    box.dataset.msgId = m.id;
-    box.innerHTML = html;
+    bubble.dataset.msgId = m.id;
+    bubble.innerHTML = html;
     if(hasImg){
-      const imgEl = box.querySelector(".near-msg-img");
+      const imgEl = bubble.querySelector(".near-msg-img");
       if(imgEl) imgEl.addEventListener("click", () => openViewer(m.image));
     }
-    return box;
+
+    if(m.from_nick !== me && otherAvatar){
+      const row = document.createElement("div");
+      row.className = "near-msg-row";
+      if (otherAvatar.startsWith('initials:')) {
+        const initial = otherAvatar.slice(9).charAt(0).toUpperCase();
+        row.innerHTML = `<div class="near-msg-avatar near-msg-avatar-letter">${initial}</div>`;
+      } else {
+        row.innerHTML = `<img class="near-msg-avatar" src="${otherAvatar}" onerror="this.style.display='none'" />`;
+      }
+      row.appendChild(bubble);
+      return row;
+    }
+    return bubble;
   }
 
   async function loadChatMessages(force){
@@ -360,6 +413,7 @@
     const sync = await fetch(`/api/chat?me=${encodeURIComponent(me)}&with=${encodeURIComponent(activeOther)}`);
     const syncMsgs = await sync.json();
     lastMsgSig = computeMsgSig(syncMsgs);
+    try { await updateChatBadge(); } catch(e){}
   }
 
   // --- REPORT MESSAGE ---
@@ -387,6 +441,11 @@
   document.body.appendChild(reportModal);
 
   window.reportMsg = function(msgId, fromNick){
+    const currentUser = localStorage.getItem("near_user");
+    if (!currentUser) {
+      if(window.toast) window.toast('Сначала войдите в аккаунт');
+      return;
+    }
     document.getElementById('nearReportReason').value = 'spam';
     document.getElementById('nearReportText').value = '';
     document.getElementById('nearReportSubmit').onclick = async () => {
@@ -396,7 +455,7 @@
         const r = await fetch('/api/report', {
           method: 'POST',
           headers: {'Content-Type':'application/json'},
-          body: JSON.stringify({ type: 'message', target_id: msgId, reporter: me, reason, text })
+          body: JSON.stringify({ type: 'message', target_id: msgId, reporter: currentUser, reason, text })
         });
         const d = await r.json();
         if(d.ok){
@@ -435,7 +494,8 @@
       }).catch(()=>{});
       if(chatWindow.style.display==="flex") loadChatMessages(); 
       loadNotifs(false); 
+      updateChatBadge();
     }
   }, 4000);
-  if(me) loadNotifs(false);
+  if(me) { loadNotifs(false); updateChatBadge(); }
 })();

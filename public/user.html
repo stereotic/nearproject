@@ -130,7 +130,7 @@
     .review-stars i {
       width: 14px;
       height: 14px;
-      color: #f59e0b;
+      color: var(--text);
     }
     .review-item-title {
       font-weight: 700;
@@ -183,6 +183,11 @@
       #nick { font-size: 18px !important; }
       .profile-avatar { width: 52px; height: 52px; border-radius: 14px; }
     }
+    .star-picker { display:flex;gap:4px;justify-content:center;margin:16px 0; }
+    .star-picker span { cursor:pointer;color:#ccc;user-select:none;padding:4px;display:flex; }
+    .star-picker span i { width: 32px; height: 32px; pointer-events: none; fill: none; transition: all 0.2s; }
+    .star-picker span.active, .star-picker span.hover { color:#facc15 !important; }
+    .star-picker span.active i, .star-picker span.hover i { fill: currentColor; transform: scale(1.1); }
   </style>
 </head>
 <body>
@@ -237,10 +242,15 @@
     </div>
 
     <div class="reviews-box">
-      <h2 class="section-title" style="margin-top:0;">
-        <i data-lucide="star" style="width: 22px;"></i>
-        Отзывы о продавце <span id="userReviewCount" class="text-muted" style="font-weight:400;font-size:16px;"></span>
-      </h2>
+      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; flex-wrap: wrap; gap: 12px;">
+        <h2 class="section-title" style="margin: 0;">
+          <i data-lucide="star" style="width: 22px;"></i>
+          Отзывы о продавце <span id="userReviewCount" class="text-muted" style="font-weight:400;font-size:16px;"></span>
+        </h2>
+        <button class="btn btn-primary btn-sm" id="writeUserReviewBtn" style="display:none; gap:8px; border-radius: 12px; padding: 10px 18px;">
+          <i data-lucide="edit-3" style="width: 16px;"></i> Оставить отзыв
+        </button>
+      </div>
       <div id="userReviews">
         <div class="review-empty">Загрузка отзывов...</div>
       </div>
@@ -331,7 +341,7 @@
               <div class="product-title">${item.title}</div>
               <div class="product-meta">
                 <div class="product-seller">
-                  <span>@${item.seller}</span>
+                  <span>@${item.seller} ${item.seller_rating > 0 ? `<span style="color:var(--text); opacity:0.7; font-size:10px; margin-left:4px;">★ ${item.seller_rating}</span>` : ''}</span>
                 </div>
                 <span class="text-muted">${item.size || ''}</span>
               </div>
@@ -367,7 +377,7 @@
         const date = rev.created_at ? new Date(rev.created_at * 1000).toLocaleDateString('ru-RU') : '';
         const img = rev.item_image ? `<div class="review-item-thumb" style="background-image:url('/uploads/${rev.item_image}');width:40px;height:40px;border-radius:8px;background-size:cover;background-position:center;flex-shrink:0;"></div>` : '';
         const starsHtml = Array(5).fill(0).map((_, i) =>
-          `<i data-lucide="star" style="width:14px;height:14px;${i < rev.rating ? '' : 'opacity:0.25'}"></i>`
+          `<i data-lucide="star" style="width:14px;height:14px;${i < rev.rating ? 'fill:currentColor;' : 'opacity:0.25'}"></i>`
         ).join('');
         card.innerHTML = `
           <div class="review-top">
@@ -412,6 +422,39 @@
   </div>
 </div>
 
+<!-- Item Select Modal -->
+<div class="modal-overlay" id="itemSelectModal">
+  <div class="modal-content" style="max-width:440px;">
+    <h2>Выберите товар</h2>
+    <p class="text-muted" style="font-size:13px;margin-bottom:20px;">По какому товару вы хотите оставить отзыв?</p>
+    <div id="reviewItemList" style="max-height:300px;overflow-y:auto;margin-bottom:20px;">
+      <!-- Items here -->
+    </div>
+    <button class="btn btn-outline" style="width:100%;" onclick="document.getElementById('itemSelectModal').style.display='none'">Отмена</button>
+  </div>
+</div>
+
+<!-- Profile Review Modal -->
+<div class="modal-overlay" id="profileReviewModal">
+  <div class="modal-content" style="max-width: 440px;">
+    <i data-lucide="star" style="width: 48px; height: 48px; margin-bottom: 16px;"></i>
+    <h2>Оставить отзыв</h2>
+    <p class="text-muted" style="font-size: 13px;">Поставьте оценку и напишите ваше впечатление</p>
+    <div class="star-picker" id="starPicker">
+      <span data-val="1"><i data-lucide="star"></i></span>
+      <span data-val="2"><i data-lucide="star"></i></span>
+      <span data-val="3"><i data-lucide="star"></i></span>
+      <span data-val="4"><i data-lucide="star"></i></span>
+      <span data-val="5"><i data-lucide="star"></i></span>
+    </div>
+    <textarea id="profileReviewText" class="modal-input" placeholder="Ваш отзыв (необязательно)" style="width: 100%; height: 100px; resize: none; margin: 12px 0; padding:12px; border-radius:12px; border:1px solid var(--border); background:var(--surface); color:var(--text); font-family:inherit;"></textarea>
+    <div style="display:flex; gap:12px; margin-top:12px;">
+      <button class="btn btn-outline" style="flex: 1;" onclick="document.getElementById('profileReviewModal').style.display='none'">Отмена</button>
+      <button class="btn btn-primary" style="flex: 1;" onclick="submitUserReview()">Отправить</button>
+    </div>
+  </div>
+</div>
+
 <link rel="stylesheet" href="/chat.css">
 <script src="/widget.js"></script>
 
@@ -450,6 +493,128 @@
       toast('Ошибка сети');
     }
   }
+
+  // --- Profile Review Logic ---
+  let purchasableItems = [];
+  let selectedItemId = null;
+  let selectedRating = 0;
+
+  async function checkPurchasable() {
+    if (!me || me === targetNick) return;
+    try {
+      const r = await fetch(`/api/purchasable-items?seller=${encodeURIComponent(targetNick)}&buyer=${encodeURIComponent(me)}`);
+      purchasableItems = await r.json();
+      if (purchasableItems.length > 0) {
+        document.getElementById('writeUserReviewBtn').style.display = 'flex';
+      }
+    } catch (e) {}
+  }
+
+  document.getElementById('writeUserReviewBtn').onclick = () => {
+    openItemSelectModal();
+  };
+
+  function openItemSelectModal() {
+    const list = document.getElementById('reviewItemList');
+    list.innerHTML = '';
+    purchasableItems.forEach(item => {
+      const el = document.createElement('div');
+      el.className = 'item-select-row';
+      el.style.display = 'flex';
+      el.style.alignItems = 'center';
+      el.style.gap = '12px';
+      el.style.padding = '12px';
+      el.style.borderRadius = '12px';
+      el.style.border = '1px solid var(--border)';
+      el.style.cursor = 'pointer';
+      el.style.marginBottom = '8px';
+      el.style.transition = 'all 0.2s';
+      
+      const img = item.image ? `<div style="width:40px;height:40px;border-radius:6px;background-size:cover;background-position:center;background-image:url('/uploads/${item.image}')"></div>` : '';
+      
+      el.innerHTML = `
+        ${img}
+        <div style="flex:1;">
+          <div style="font-weight:700;font-size:14px;">${item.title}</div>
+          <div style="font-size:12px;color:var(--text-muted);">${item.price.toLocaleString()} ₽</div>
+        </div>
+      `;
+      el.onclick = () => {
+        selectedItemId = item.id;
+        document.getElementById('itemSelectModal').style.display = 'none';
+        openReviewModal();
+      };
+      el.onmouseover = () => { el.style.borderColor = 'var(--accent)'; el.style.background = 'var(--accent-light)'; };
+      el.onmouseout = () => { el.style.borderColor = 'var(--border)'; el.style.background = 'transparent'; };
+      list.appendChild(el);
+    });
+    document.getElementById('itemSelectModal').style.display = 'flex';
+  }
+
+  function openReviewModal() {
+    selectedRating = 0;
+    document.querySelectorAll('#starPicker span').forEach(s => s.classList.remove('active', 'hover'));
+    document.getElementById('profileReviewText').value = '';
+    document.getElementById('profileReviewModal').style.display = 'flex';
+  }
+
+  function onStarClick(val) {
+    selectedRating = val;
+    document.querySelectorAll('#starPicker span').forEach(s => {
+      const v = parseInt(s.dataset.val);
+      if (v <= val) s.classList.add('active');
+      else s.classList.remove('active');
+    });
+  }
+
+  document.getElementById('starPicker').onclick = (e) => {
+    const span = e.target.closest('span');
+    if (!span) return;
+    onStarClick(parseInt(span.dataset.val));
+  };
+
+  document.getElementById('starPicker').onmouseover = (e) => {
+    if (selectedRating) return;
+    const span = e.target.closest('span');
+    if (!span) return;
+    const val = parseInt(span.dataset.val);
+    document.querySelectorAll('#starPicker span').forEach(s => {
+      if (parseInt(s.dataset.val) <= val) s.classList.add('hover');
+      else s.classList.remove('hover');
+    });
+  };
+
+  document.getElementById('starPicker').onmouseleave = () => {
+    if (selectedRating) return;
+    document.querySelectorAll('#starPicker span').forEach(s => s.classList.remove('hover'));
+  };
+
+  async function submitUserReview() {
+    if (!selectedRating) return toast('Выберите оценку');
+    const text = document.getElementById('profileReviewText').value.trim();
+    try {
+      const r = await fetch('/api/review', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          item_id: selectedItemId,
+          buyer: me,
+          rating: selectedRating,
+          text
+        })
+      });
+      const data = await r.json();
+      if (!r.ok) throw new Error(data.error);
+      toast('Отзыв отправлен!');
+      document.getElementById('profileReviewModal').style.display = 'none';
+      checkPurchasable();
+      loadUserReviews();
+    } catch (e) {
+      toast(e.message || 'Ошибка');
+    }
+  }
+
+  checkPurchasable();
 </script>
 
 </body>
